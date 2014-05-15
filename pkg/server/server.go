@@ -143,10 +143,14 @@ func (srv *server) handleConn(conn net.Conn, done *sync.WaitGroup) {
 		go func() {
 			defer conn.Close()
 			defer done.Done()
-			var id string
+			id := ""
 			for _, kv := range req.Kvs {
+				if len(kv.Value) == 0 {
+					continue
+				}
 				if kv.Key == jdh.KeyId {
-					id = kv.Value
+					id = kv.Value[0]
+					break
 				}
 			}
 			v, err := srv.db.Get(table, id)

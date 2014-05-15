@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -53,6 +54,37 @@ func searchExtern(serv string, extern []string) string {
 		}
 	}
 	return ""
+}
+
+// ValsFromArgs adds values from an argument list or the stdin.
+func valsFromArgs(id string, args []string) *jdh.Values {
+	vals := new(jdh.Values)
+	vals.Add(jdh.KeyId, id)
+	if len(args) == 0 {
+		in := bufio.NewReader(os.Stdin)
+		for {
+			tn, err := readLine(in)
+			if err != nil {
+				break
+			}
+			if len(tn) == 1 {
+				continue
+			}
+			ln := strings.Join(tn, " ")
+			if strings.Index(ln, "=") < 0 {
+				continue
+			}
+			vals.Add(parseKeyValArg(ln))
+		}
+	} else {
+		for _, a := range args {
+			if strings.Index(a, "=") < 0 {
+				continue
+			}
+			vals.Add(parseKeyValArg(a))
+		}
+	}
+	return vals
 }
 
 // parses keyValue argument. It returns the key and the value.

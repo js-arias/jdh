@@ -76,7 +76,7 @@ func (db *DB) List(table jdh.Table, args *jdh.Values) (jdh.ListScanner, error) {
 	if db.isClosed {
 		return nil, errors.New("database already closed")
 	}
-	if len(args.KV) == 0 {
+	if args == nil {
 		return nil, errors.New("empty argument list")
 	}
 	switch table {

@@ -26,8 +26,8 @@ Description
 Tx.in reads taxon data from the indicated files, or the standard input
 (if no file is defined), and adds them to the jdh database.
 
-If the format is txt, it is assummed that each line corresponds to a taxon
-(lines starting with '#' or ';' will be ignored).
+Default input format is txt. If the format is txt, it is assummed that each 
+line corresponds to a taxon (lines starting with '#' or ';' will be ignored).
 
 By default, taxons will be added to the root of the taxonomy, valid, and
 unranked.
@@ -117,21 +117,33 @@ func txInRun(c *cmdapp.Command, args []string) {
 	if len(rankFlag) > 0 {
 		rank = jdh.GetRank(rankFlag)
 	}
+	format := "txt"
+	if len(formatFlag) > 0 {
+		format = formatFlag
+	}
 	if len(args) > 0 {
-		for _, fn := range args {
-			if (len(formatFlag) == 0) || (formatFlag == "txt") {
-				procTxInTxt(c, fn, pId, rank, valid)
+		switch format {
+		case "txt":
+			for _, fn := range args {
+				txInTxt(c, fn, pId, rank, valid)
 			}
+		default:
+			fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr("format "+format+" unknown"))
+			os.Exit(1)
 		}
 	} else {
-		if (len(formatFlag) == 0) || (formatFlag == "txt") {
-			procTxInTxt(c, "", pId, rank, valid)
+		switch format {
+		case "txt":
+			txInTxt(c, "", pId, rank, valid)
+		default:
+			fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr("format "+format+" unknown"))
+			os.Exit(1)
 		}
 	}
 	localDB.Exec(jdh.Commit, "", nil)
 }
 
-func procTxInTxt(c *cmdapp.Command, fname, parent string, rank jdh.Rank, valid bool) {
+func txInTxt(c *cmdapp.Command, fname, parent string, rank jdh.Rank, valid bool) {
 	var in *bufio.Reader
 	if len(fname) > 0 {
 		f, err := os.Open(fname)

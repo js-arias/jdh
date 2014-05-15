@@ -33,19 +33,45 @@ func (db *DB) taxonList(kvs []jdh.KeyValue) (jdh.ListScanner, error) {
 	for _, kv := range kvs {
 		switch kv.Key {
 		case jdh.TaxChildren:
-			go db.childs(l, kv.Value)
+			id := ""
+			if len(kv.Value) > 0 {
+				id = strings.TrimSpace(kv.Value[0])
+			}
+			go db.childs(l, id)
 			ok = true
 		case jdh.TaxParents:
-			if (len(kv.Value) == 0) || (kv.Value == "0") {
+			if len(kv.Value) == 0 {
+				l.Close()
+				ok = true
+				break
+			}
+			id := strings.TrimSpace(kv.Value[0])
+			if (len(id) == 0) || (id == "0") {
 				return nil, errors.New("taxon without identification")
 			}
-			go db.parents(l, kv.Value)
+			go db.parents(l, id)
 			ok = true
 		case jdh.TaxSynonyms:
-			go db.synonyms(l, kv.Value)
+			if len(kv.Value) == 0 {
+				l.Close()
+				ok = true
+				break
+			}
+			id := strings.TrimSpace(kv.Value[0])
+			if (len(id) == 0) || (id == "0") {
+				return nil, errors.New("taxon without identification")
+			}
+			go db.synonyms(l, id)
 			ok = true
 		case jdh.TaxName:
-			go db.searchTaxon(l, kv.Value, kvs)
+			if len(kv.Value) == 0 {
+				return nil, errors.New("taxon without identification")
+			}
+			nm := strings.Join(strings.Fields(kv.Value[0]), " ")
+			if len(nm) == 0 {
+				return nil, errors.New("taxon without identification")
+			}
+			go db.searchTaxon(l, nm, kvs)
 			ok = true
 		}
 		if ok {
@@ -237,21 +263,24 @@ func (db *DB) searchTaxon(l *listScanner, name string, kvs []jdh.KeyValue) {
 	var rank jdh.Rank
 	pName := ""
 	for _, kv := range kvs {
+		if len(kv.Value) == 0 {
+			continue
+		}
 		switch kv.Key {
 		case jdh.TaxParent:
-			pId = kv.Value
+			pId = kv.Value[0]
 		case jdh.TaxRank:
-			rank = jdh.GetRank(kv.Value)
+			rank = jdh.GetRank(kv.Value[0])
 		case jdh.TaxParentName:
-			pName = strings.Join(strings.Fields(name), " ")
+			pName = strings.Join(strings.Fields(kv.Value[0]), " ")
 		}
 	}
+	vals := url.Values{}
+	vals.Add("db", "taxonomy")
+	vals.Add("term", nm)
 	for next := 0; ; {
-		vals := url.Values{}
-		vals.Add("db", "taxonomy")
-		vals.Add("term", nm)
 		if next > 0 {
-			vals.Add("RetStart", strconv.FormatInt(int64(next), 10))
+			vals.Set("RetStart", strconv.FormatInt(int64(next), 10))
 		}
 		request := ncbiHead + "esearch.fcgi?" + vals.Encode()
 		nl, nx, err := db.search(request)

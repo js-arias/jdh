@@ -5,7 +5,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -22,11 +21,11 @@ var txSet = &cmdapp.Command{
 	Long: `
 Description
 
-Tx.set sets a particular value for a taxon in the database. Use of this
+Tx.set sets a particular value for a taxon in the database. Use this
 command to edit the taxon database, instead of manual edition.
 
-If no taxon and key is defined, the key values will be read from the
-standard input, it is assumed that each line is in the form:
+If no key is defined, the key values will be read from the standard input, 
+it is assumed that each line is in the form:
      'key=value'
 Lines starting with '#' or ';' will be ignored.
 
@@ -46,7 +45,6 @@ Options
       new value is empty, it is interpreted as a deletion of the
       current value. For flexibility it is recommended to use quotations,
       e.g. "authority=(Linnaeus, 1758)".
-      Valid keys are:
       Valid keys are:
           authority      Authorship of the taxon.
           comment        A free text comment on the taxon.
@@ -116,32 +114,7 @@ func txSetRun(c *cmdapp.Command, args []string) {
 		fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr("expectiong taxon name or id"))
 		c.Usage()
 	}
-	vals := new(jdh.Values)
-	vals.Add(jdh.KeyId, tax.Id)
-	if len(args) == 0 {
-		in := bufio.NewReader(os.Stdin)
-		for {
-			tn, err := readLine(in)
-			if err != nil {
-				break
-			}
-			if len(tn) == 1 {
-				continue
-			}
-			ln := strings.Join(tn, " ")
-			if strings.Index(ln, "=") < 0 {
-				continue
-			}
-			vals.Add(parseKeyValArg(ln))
-		}
-	} else {
-		for _, a := range args {
-			if strings.Index(a, "=") < 0 {
-				continue
-			}
-			vals.Add(parseKeyValArg(a))
-		}
-	}
+	vals := valsFromArgs(tax.Id, args)
 	localDB.Exec(jdh.Set, jdh.Taxonomy, vals)
 	localDB.Exec(jdh.Commit, "", nil)
 }

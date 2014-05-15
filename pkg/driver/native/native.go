@@ -190,7 +190,7 @@ func (db *DB) Get(table jdh.Table, id string) (jdh.Scanner, error) {
 	req := &Request{
 		Query: jdh.Get,
 		Table: table,
-		Kvs:   []jdh.KeyValue{jdh.KeyValue{Key: jdh.KeyId, Value: id}},
+		Kvs:   []jdh.KeyValue{jdh.KeyValue{Key: jdh.KeyId, Value: []string{id}}},
 	}
 	enc.Encode(req)
 	dec := json.NewDecoder(conn)
@@ -206,7 +206,7 @@ func (db *DB) Get(table jdh.Table, id string) (jdh.Scanner, error) {
 
 // List executes a query that returns a list.
 func (db *DB) List(table jdh.Table, args *jdh.Values) (jdh.ListScanner, error) {
-	if len(args.KV) == 0 {
+	if args == nil {
 		return nil, errors.New("empty argument list")
 	}
 	conn, err := net.Dial("tcp", db.port)

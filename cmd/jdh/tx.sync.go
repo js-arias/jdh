@@ -15,9 +15,9 @@ import (
 
 var txSync = &cmdapp.Command{
 	Name: "tx.sync",
-	Synopsis: `-e|--extdb name [-i|--id value] [-l|--populate name]
-	[-m|--match] [-p|--port value] [-r|--rank name] [-u|--update]
-	[-v|--verbose] [<name> [<parentname>]]`,
+	Synopsis: `-e|--extdb name [-d|--validate] [-i|--id value]
+	[-l|--populate name] [-m|--match] [-p|--port value] [-r|--rank name]
+	[-u|--update] [-v|--verbose] [<name> [<parentname>]]`,
 	Short:    "updates local database using an extern database",
 	IsCommon: true,
 	Long: `
@@ -36,6 +36,11 @@ names in the extern database.
 
 Options
 
+    -d
+    --validate
+      If set, and -u, --update option is defined, then the validity of the
+      taxon will be set as in the extern database.
+    
     -e name
     --extdb name
       Set the extern database.
@@ -86,9 +91,10 @@ Options
   
     -u
     --update
-      If found, it will update the authorship, rank, taxon status and source
-      of a taxon, following the external database. For synonyms, new parents
-      will be added as needed. 
+      If found, it will update the authorship, rank of a taxon, following
+      the external database. If the option -d, --validate is defined, also
+      sets the taxon status, and for synonyms, new parents will be added 
+      as needed. 
       
     <name>
       Search for the indicated name. If there are more than one taxon,
@@ -103,6 +109,8 @@ Options
 }
 
 func init() {
+	txSync.Flag.BoolVar(&validFlag, "validate", false, "")
+	txSync.Flag.BoolVar(&validFlag, "d", false, "")
 	txSync.Flag.StringVar(&extDBFlag, "extdb", "", "")
 	txSync.Flag.StringVar(&extDBFlag, "e", "", "")
 	txSync.Flag.StringVar(&idFlag, "id", "", "")
@@ -309,30 +317,32 @@ func txSyncUpdate(c *cmdapp.Command, tax *jdh.Taxon) {
 		fmt.Fprintf(os.Stderr, "unable to retrieve %s:%s\n", tax.Extern, eid)
 		return
 	}
-	args := new(jdh.Values)
 	if len(ext.Authority) > 0 {
+		args := new(jdh.Values)
 		args.Add(jdh.KeyId, tax.Id)
 		args.Add(jdh.TaxAuthority, ext.Authority)
 		localDB.Exec(jdh.Set, jdh.Taxonomy, args)
 	}
-	if tax.IsValid != ext.IsValid {
-		args.Reset()
-		args.Add(jdh.KeyId, tax.Id)
-		if ext.IsValid {
-			args.Add(jdh.TaxValid, "")
-			localDB.Exec(jdh.Set, jdh.Taxonomy, args)
-		} else {
-			p := taxon(c, localDB, extDBFlag+":"+ext.Parent)
-			if len(p.Id) == 0 {
-				exPar := taxon(c, extDB, ext.Parent)
-				p = txSyncAddToTaxonomy(c, exPar)
+	if validFlag {
+		if tax.IsValid != ext.IsValid {
+			args := new(jdh.Values)
+			args.Add(jdh.KeyId, tax.Id)
+			if ext.IsValid {
+				args.Add(jdh.TaxValid, "")
+				localDB.Exec(jdh.Set, jdh.Taxonomy, args)
+			} else {
+				p := taxon(c, localDB, extDBFlag+":"+ext.Parent)
+				if len(p.Id) == 0 {
+					exPar := taxon(c, extDB, ext.Parent)
+					p = txSyncAddToTaxonomy(c, exPar)
+				}
+				args.Add(jdh.TaxSynonym, p.Id)
+				localDB.Exec(jdh.Set, jdh.Taxonomy, args)
 			}
-			args.Add(jdh.TaxSynonym, p.Id)
-			localDB.Exec(jdh.Set, jdh.Taxonomy, args)
 		}
 	}
 	if ext.Rank != jdh.Unranked {
-		args.Reset()
+		args := new(jdh.Values)
 		args.Add(jdh.KeyId, tax.Id)
 		args.Add(jdh.TaxRank, ext.Rank.String())
 		localDB.Exec(jdh.Set, jdh.Taxonomy, args)
@@ -342,7 +352,7 @@ func txSyncUpdate(c *cmdapp.Command, tax *jdh.Taxon) {
 			tax.Comment += "\n"
 		}
 		tax.Comment += ext.Comment
-		args.Reset()
+		args := new(jdh.Values)
 		args.Add(jdh.KeyId, tax.Id)
 		args.Add(jdh.KeyComment, tax.Comment)
 		localDB.Exec(jdh.Set, jdh.Taxonomy, args)
@@ -529,6 +539,10 @@ func txSyncPop(c *cmdapp.Command, tax *jdh.Taxon, prevRank, rank jdh.Rank) {
 }
 
 func txSyncPopDesc(c *cmdapp.Command, l jdh.ListScanner, p *jdh.Taxon) {
+	pId := p.Id
+	if !p.IsValid {
+		pId = p.Parent
+	}
 	for {
 		desc := &jdh.Taxon{}
 		if err := l.Scan(desc); err != nil {
@@ -546,7 +560,7 @@ func txSyncPopDesc(c *cmdapp.Command, l jdh.ListScanner, p *jdh.Taxon) {
 		tax := &jdh.Taxon{}
 		*tax = *desc
 		tax.Id = ""
-		tax.Parent = p.Id
+		tax.Parent = pId
 		tax.Extern = []string{extDBFlag + ":" + desc.Id}
 		if _, err := localDB.Exec(jdh.Add, jdh.Taxonomy, tax); err != nil {
 			fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr(err))

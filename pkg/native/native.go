@@ -19,7 +19,9 @@ type DB struct {
 	path string // path of the database
 
 	//database tables
+	d *datasets
 	t *taxonomy
+	s *specimens
 
 	lock sync.Mutex
 }
@@ -27,7 +29,9 @@ type DB struct {
 // Open opens a database in a given path.
 func Open(path string) *DB {
 	db := &DB{path: path}
+	db.d = openDatasets(db)
 	db.t = openTaxonomy(db)
+	db.s = openSpecimens(db)
 	return db
 }
 
@@ -36,6 +40,18 @@ func (db *DB) Add(table jdh.Table, dec *json.Decoder) (string, error) {
 	db.lock.Lock()
 	defer db.lock.Unlock()
 	switch table {
+	case jdh.Datasets:
+		set := &jdh.Dataset{}
+		if err := dec.Decode(set); err != nil {
+			return "", err
+		}
+		return db.d.add(set)
+	case jdh.Specimens:
+		spe := &jdh.Specimen{}
+		if err := dec.Decode(spe); err != nil {
+			return "", err
+		}
+		return db.s.add(spe)
 	case jdh.Taxonomy:
 		tax := &jdh.Taxon{}
 		if err := dec.Decode(tax); err != nil {
@@ -67,7 +83,9 @@ func (db *DB) Commit() error {
 	ec := make(chan error)
 	go func() {
 		var done sync.WaitGroup
+		doCommit(db.d, &done, ec)
 		doCommit(db.t, &done, ec)
+		doCommit(db.s, &done, ec)
 		done.Wait()
 		close(ec)
 	}()
@@ -85,6 +103,10 @@ func (db *DB) Delete(table jdh.Table, vals []jdh.KeyValue) error {
 	db.lock.Lock()
 	defer db.lock.Unlock()
 	switch table {
+	case jdh.Datasets:
+		return db.d.delete(vals)
+	case jdh.Specimens:
+		return db.s.delete(vals)
 	case jdh.Taxonomy:
 		return db.t.delete(vals)
 	}
@@ -96,6 +118,10 @@ func (db *DB) Get(table jdh.Table, id string) (interface{}, error) {
 	db.lock.Lock()
 	defer db.lock.Unlock()
 	switch table {
+	case jdh.Datasets:
+		return db.d.get(id)
+	case jdh.Specimens:
+		return db.s.get(id)
 	case jdh.Taxonomy:
 		return db.t.get(id)
 	}
@@ -107,6 +133,10 @@ func (db *DB) List(table jdh.Table, vals []jdh.KeyValue) (*list.List, error) {
 	db.lock.Lock()
 	defer db.lock.Unlock()
 	switch table {
+	case jdh.Datasets:
+		return db.d.list(vals)
+	case jdh.Specimens:
+		return db.s.list(vals)
 	case jdh.Taxonomy:
 		return db.t.list(vals)
 	}
@@ -118,6 +148,10 @@ func (db *DB) Set(table jdh.Table, vals []jdh.KeyValue) error {
 	db.lock.Lock()
 	defer db.lock.Unlock()
 	switch table {
+	case jdh.Datasets:
+		return db.d.set(vals)
+	case jdh.Specimens:
+		return db.s.set(vals)
 	case jdh.Taxonomy:
 		return db.t.set(vals)
 	}

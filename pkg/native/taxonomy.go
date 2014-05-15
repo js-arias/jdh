@@ -242,8 +242,11 @@ func (tx *taxon) encode(enc *json.Encoder) {
 func (t *taxonomy) delete(vals []jdh.KeyValue) error {
 	id := ""
 	for _, kv := range vals {
+		if len(kv.Value) == 0 {
+			continue
+		}
 		if kv.Key == jdh.KeyId {
-			id = kv.Value
+			id = kv.Value[0]
 			break
 		}
 	}
@@ -263,6 +266,10 @@ func (t *taxonomy) delete(vals []jdh.KeyValue) error {
 func (t *taxonomy) delTaxon(tx *taxon) {
 	for len(tx.childs) > 0 {
 		t.delTaxon(tx.childs[0])
+	}
+	// removes specimens
+	if t.db.s != nil {
+		t.db.s.delTaxon(tx.data.Id)
 	}
 	tx.childs = nil
 	nmLow := strings.ToLower(tx.data.Name)
@@ -319,14 +326,19 @@ func (t *taxonomy) get(id string) (*jdh.Taxon, error) {
 func (t *taxonomy) list(vals []jdh.KeyValue) (*list.List, error) {
 	l := list.New()
 	nameList := false
+	noVal := true
 	// creates the list
 	for _, kv := range vals {
-		if kv.Key == jdh.TaxChildren {
+		switch kv.Key {
+		case jdh.TaxChildren:
 			tx := t.root
 			if len(kv.Value) > 0 {
-				var ok bool
-				if tx, ok = t.ids[kv.Value]; !ok {
-					return nil, fmt.Errorf("taxon %s not in database", kv.Value)
+				v := strings.TrimSpace(kv.Value[0])
+				if len(v) > 0 {
+					var ok bool
+					if tx, ok = t.ids[v]; !ok {
+						return nil, fmt.Errorf("taxon %s not in database", kv.Value)
+					}
 				}
 			}
 			for _, d := range tx.childs {
@@ -334,15 +346,18 @@ func (t *taxonomy) list(vals []jdh.KeyValue) (*list.List, error) {
 					l.PushBack(d.data)
 				}
 			}
-			break
-		}
-		if kv.Key == jdh.TaxSynonyms {
-			tx := t.root
+			noVal = false
+		case jdh.TaxSynonyms:
 			if len(kv.Value) == 0 {
 				return l, nil
 			}
+			tx := t.root
+			v := strings.TrimSpace(kv.Value[0])
+			if len(v) == 0 {
+				return l, nil
+			}
 			var ok bool
-			if tx, ok = t.ids[kv.Value]; !ok {
+			if tx, ok = t.ids[v]; !ok {
 				return nil, fmt.Errorf("taxon %s not in database", kv.Value)
 			}
 			for _, d := range tx.childs {
@@ -350,23 +365,28 @@ func (t *taxonomy) list(vals []jdh.KeyValue) (*list.List, error) {
 					l.PushBack(d.data)
 				}
 			}
-			break
-		}
-		if kv.Key == jdh.TaxParents {
+			noVal = false
+		case jdh.TaxParents:
 			if len(kv.Value) == 0 {
 				return l, nil
 			}
-			tx, ok := t.ids[kv.Value]
+			v := strings.TrimSpace(kv.Value[0])
+			if len(v) == 0 {
+				return l, nil
+			}
+			tx, ok := t.ids[v]
 			if !ok {
 				return nil, fmt.Errorf("taxon %s not in database", kv.Value)
 			}
 			for p := tx.parent; p != t.root; p = p.parent {
 				l.PushBack(p.data)
 			}
-			break
-		}
-		if kv.Key == jdh.TaxName {
-			nm := strings.ToLower(strings.TrimSpace(kv.Value))
+			noVal = false
+		case jdh.TaxName:
+			if len(kv.Value) == 0 {
+				return nil, errors.New("taxon without identification")
+			}
+			nm := strings.ToLower(strings.Join(strings.Fields(kv.Value[0]), " "))
 			if len(nm) == 0 {
 				return nil, errors.New("taxon without identification")
 			}
@@ -390,45 +410,54 @@ func (t *taxonomy) list(vals []jdh.KeyValue) (*list.List, error) {
 					l.PushBack(tx.data)
 				}
 			}
+			noVal = false
 			nameList = true
-			break
 		}
 	}
-
+	if noVal {
+		return nil, errors.New("taxon without identification")
+	}
 	if !nameList {
 		return l, nil
 	}
 
 	// filters of the list.
 	for _, kv := range vals {
+		if l.Len() == 0 {
+			break
+		}
+		if len(kv.Value) == 0 {
+			continue
+		}
 		switch kv.Key {
 		case jdh.TaxParent:
-			if len(kv.Value) == 0 {
+			pId := strings.TrimSpace(kv.Value[0])
+			if len(pId) == 0 {
 				continue
 			}
 			for e := l.Front(); e != nil; {
 				nx := e.Next()
 				tax := e.Value.(*jdh.Taxon)
-				if !t.isDesc(tax.Id, kv.Value) {
+				if !t.isDesc(tax.Id, pId) {
 					l.Remove(e)
 				}
 				e = nx
 			}
 		case jdh.TaxParentName:
-			p := strings.Join(strings.Fields(kv.Value), " ")
+			p := strings.Join(strings.Fields(kv.Value[0]), " ")
 			if len(p) == 0 {
 				continue
 			}
 			for e := l.Front(); e != nil; {
 				nx := e.Next()
 				tax := e.Value.(*jdh.Taxon)
-				if !t.hasParentName(tax.Id, kv.Value) {
+				if !t.hasParentName(tax.Id, p) {
 					l.Remove(e)
 				}
 				e = nx
 			}
 		case jdh.TaxRank:
-			rank := jdh.GetRank(kv.Value)
+			rank := jdh.GetRank(strings.TrimSpace(kv.Value[0]))
 			for e := l.Front(); e != nil; {
 				nx := e.Next()
 				tax := e.Value.(*jdh.Taxon)
@@ -480,8 +509,11 @@ func (t *taxonomy) hasParentName(id, parent string) bool {
 func (t *taxonomy) set(vals []jdh.KeyValue) error {
 	id := ""
 	for _, kv := range vals {
+		if len(kv.Value) == 0 {
+			continue
+		}
 		if kv.Key == jdh.KeyId {
-			id = kv.Value
+			id = kv.Value[0]
 			break
 		}
 	}
@@ -496,35 +528,54 @@ func (t *taxonomy) set(vals []jdh.KeyValue) error {
 	for _, kv := range vals {
 		switch kv.Key {
 		case jdh.KeyComment:
-			if tax.Comment == kv.Value {
+			v := ""
+			if len(kv.Value) > 0 {
+				v = strings.TrimSpace(kv.Value[0])
+			}
+			if tax.Comment == v {
 				continue
 			}
-			tax.Comment = kv.Value
+			tax.Comment = v
 		case jdh.KeyExtern:
-			if len(kv.Value) == 0 {
-				continue
-			}
-			serv, ext, err := jdh.ParseExtern(kv.Value)
-			if err != nil {
-				continue
-			}
-			if len(ext) == 0 {
-				if !t.delExtern(tx, serv) {
+			ok := false
+			for _, v := range kv.Value {
+				v := strings.TrimSpace(v)
+				if len(v) == 0 {
 					continue
 				}
-				break
+				serv, ext, err := jdh.ParseExtern(v)
+				if err != nil {
+					continue
+				}
+				if len(ext) == 0 {
+					if !t.delExtern(tx, serv) {
+						continue
+					}
+					ok = true
+					continue
+				}
+				if t.addExtern(tx, v) != nil {
+					continue
+				}
+				ok = true
 			}
-			if t.addExtern(tx, kv.Value) != nil {
+			if !ok {
 				continue
 			}
 		case jdh.TaxAuthority:
-			au := strings.Join(strings.Fields(kv.Value), " ")
-			if tax.Authority == au {
+			v := ""
+			if len(kv.Value) > 0 {
+				v = strings.Join(strings.Fields(kv.Value[0]), " ")
+			}
+			if tax.Authority == v {
 				continue
 			}
-			tax.Authority = au
+			tax.Authority = v
 		case jdh.TaxName:
-			nm := strings.Join(strings.Fields(kv.Value), " ")
+			nm := ""
+			if len(kv.Value) > 0 {
+				nm = strings.Join(strings.Fields(kv.Value[0]), " ")
+			}
 			if len(nm) == 0 {
 				return fmt.Errorf("new name for %s undefined", tx.data.Name)
 			}
@@ -554,8 +605,12 @@ func (t *taxonomy) set(vals []jdh.KeyValue) error {
 		case jdh.TaxParent:
 			p := t.root
 			if len(kv.Value) > 0 {
+				v := strings.TrimSpace(kv.Value[0])
+				if len(v) == 0 {
+					continue
+				}
 				var ok bool
-				p, ok = t.ids[kv.Value]
+				p, ok = t.ids[v]
 				if !ok {
 					return fmt.Errorf("new parent [%s] for taxon %s not in database", kv.Value, tax.Name)
 				}
@@ -563,11 +618,11 @@ func (t *taxonomy) set(vals []jdh.KeyValue) error {
 			if tx.parent == p {
 				continue
 			}
-			if !p.data.IsValid {
-				return fmt.Errorf("new parent [%s] for taxon %s is a synonym", p.data.Name, tax.Name)
-			}
 			if (!tax.IsValid) && (p == t.root) {
 				return fmt.Errorf("taxon %s is a synonym, it requires a parent", tax.Name)
+			}
+			if (p != t.root) && (!p.data.IsValid) {
+				return fmt.Errorf("new parent [%s] for taxon %s is a synonym", p.data.Name, tax.Name)
 			}
 			if !p.isDescValid(tax.Rank, tax.IsValid) {
 				return fmt.Errorf("taxon %s rank incompatible with new parent [%s] hierarchy", tax.Name, p.data.Name)
@@ -577,19 +632,26 @@ func (t *taxonomy) set(vals []jdh.KeyValue) error {
 			tx.parent = p
 			tax.Parent = p.data.Id
 		case jdh.TaxRank:
-			rank := jdh.GetRank(kv.Value)
-			if tax.Rank == rank {
+			v := jdh.Unranked
+			if len(kv.Value) > 0 {
+				v = jdh.GetRank(strings.TrimSpace(kv.Value[0]))
+			}
+			if tax.Rank == v {
 				continue
 			}
-			if !tx.parent.isDescValid(rank, tax.IsValid) {
-				return fmt.Errorf("new rank [%s] for taxon %s incompatible with taxonomy hierarchy", kv.Value, tax.Name)
+			if !tx.parent.isDescValid(v, tax.IsValid) {
+				return fmt.Errorf("new rank [%s] for taxon %s incompatible with taxonomy hierarchy", v, tax.Name)
 			}
-			tax.Rank = rank
+			tax.Rank = v
 		case jdh.TaxSynonym:
-			p := tx.parent
+			p := t.root
 			if len(kv.Value) > 0 {
+				v := strings.TrimSpace(kv.Value[0])
+				if len(v) == 0 {
+					continue
+				}
 				var ok bool
-				p, ok = t.ids[kv.Value]
+				p, ok = t.ids[v]
 				if !ok {
 					return fmt.Errorf("new parent [%s] for taxon %s not in database", kv.Value, tax.Name)
 				}
@@ -611,6 +673,7 @@ func (t *taxonomy) set(vals []jdh.KeyValue) error {
 			}
 			for _, d := range tx.childs {
 				d.parent = p
+				d.data.Parent = p.data.Id
 				p.childs = append(p.childs, d)
 			}
 			tx.childs = nil
@@ -671,8 +734,8 @@ func (t *taxonomy) delExtern(tx *taxon, service string) bool {
 	return false
 }
 
-// IsInTax returns true if the taxon is the taxonomy.
-func (t *taxonomy) isInTax(id string) bool {
+// IsInDB returns true if the taxon is the taxonomy.
+func (t *taxonomy) isInDB(id string) bool {
 	if len(id) == 0 {
 		return false
 	}

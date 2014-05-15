@@ -176,12 +176,15 @@ func txInfoRun(c *cmdapp.Command, args []string) {
 			p := taxon(c, db, tax.Parent)
 			fmt.Fprintf(os.Stdout, "%-16s %s %s [id: %s]\n", "Parent:", p.Name, p.Authority, p.Id)
 		}
-		fmt.Fprintf(os.Stdout, "%s\n", "Extern ids:")
-		for _, e := range tax.Extern {
-			fmt.Fprintf(os.Stdout, "\t%s\n", e)
+		if len(tax.Extern) > 0 {
+			fmt.Fprintf(os.Stdout, "Extern ids:\n")
+			for _, e := range tax.Extern {
+				fmt.Fprintf(os.Stdout, "\t%s\n", e)
+			}
 		}
-		fmt.Fprintf(os.Stdout, "%s\n", "Comments:")
-		fmt.Fprintf(os.Stdout, "%s\n", tax.Comment)
+		if len(tax.Comment) > 0 {
+			fmt.Fprintf(os.Stdout, "Comments:\n%s\n", tax.Comment)
+		}
 		txInfoList(c, db, tax.Id, true)
 		txInfoList(c, db, tax.Id, false)
 		return

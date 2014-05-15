@@ -23,12 +23,35 @@ var (
 	verboseFlag bool   // set command verbosity, -v|--verbose
 )
 
+// flags used by dataset commands.
+var (
+	citFlag bool // set citation option, -c|--citation
+	licFlag bool // set license option, -l|--license
+	urlFlag bool // set url option, -u|--url
+)
+
 // flags used by taxon commands.
 var (
 	ancFlag     string // set a parent id, -a|--anc
 	ancsFlag    bool   // ancs flag, -a|--ancs
-	collFlag    bool   // set collapse option -c|--collapse
+	colpFlag    bool   // set collapse option -c|--collapse
 	popFlag     string // populate flag, -l|--populate
 	rankFlag    string // set a rank, -r|--rank
 	synonymFlag bool   // synonym flag, -s|--synonym
+	validFlag   bool   // validate flag, -d|--validate
+)
+
+// flags used by specimen commands
+var (
+	addFlag     bool   // add georeferences, -a|--add
+	childFlag   bool   // children flag, -c|--children
+	corrFlag    bool   // correct a georeference, -c|--correct
+	delFlag     bool   // delete georeference, -d|--delete
+	dsetFlag    string // set dataset, -d|--dataset
+	geoRefFlag  bool   // georef flag -g|--georef
+	countryFlag string // set country, -r|--coutry
+	noRefFlag   bool   // no georef flag -n|--nogeoref
+	skipFlag    bool   // skip flag, -s|--skip
+	taxonFlag   string // set taxon, -t|--taxon
+	uncertFlag  int    // set uncertainty, -u|--uncert
 )

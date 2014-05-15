@@ -99,22 +99,22 @@ func (sp *species) hasParentName(p string) bool {
 	if len(p) == 0 {
 		return false
 	}
-	if sp.Kingdom == p {
+	if strings.ToLower(sp.Kingdom) == p {
 		return true
 	}
-	if sp.Phylum == p {
+	if strings.ToLower(sp.Phylum) == p {
 		return true
 	}
-	if sp.Clazz == p {
+	if strings.ToLower(sp.Clazz) == p {
 		return true
 	}
-	if sp.Order == p {
+	if strings.ToLower(sp.Order) == p {
 		return true
 	}
-	if sp.Family == p {
+	if strings.ToLower(sp.Family) == p {
 		return true
 	}
-	if sp.Genus == p {
+	if strings.ToLower(sp.Genus) == p {
 		return true
 	}
 	return false
@@ -130,20 +130,45 @@ func (db *DB) taxonList(kvs []jdh.KeyValue) (jdh.ListScanner, error) {
 	for _, kv := range kvs {
 		switch kv.Key {
 		case jdh.TaxChildren:
-			go db.childs(l, kv.Value)
+			id := ""
+			if len(kv.Value) > 0 {
+				id = strings.TrimSpace(kv.Value[0])
+			}
+			go db.childs(l, id)
 			ok = true
 		case jdh.TaxParents:
-			if (len(kv.Value) == 0) || (kv.Value == "0") {
+			if len(kv.Value) == 0 {
+				l.Close()
+				ok = true
+				break
+			}
+			id := strings.TrimSpace(kv.Value[0])
+			if (len(id) == 0) || (id == "0") {
 				return nil, errors.New("taxon without identification")
 			}
-			go db.parents(l, kv.Value)
+			go db.parents(l, id)
 			ok = true
 		case jdh.TaxSynonyms:
-			go db.synonyms(l, kv.Value)
+			if len(kv.Value) == 0 {
+				l.Close()
+				ok = true
+				break
+			}
+			id := strings.TrimSpace(kv.Value[0])
+			if (len(id) == 0) || (id == "0") {
+				return nil, errors.New("taxon without identification")
+			}
+			go db.synonyms(l, id)
 			ok = true
-
 		case jdh.TaxName:
-			go db.searchTaxon(l, kv.Value, kvs)
+			if len(kv.Value) == 0 {
+				return nil, errors.New("taxon without identification")
+			}
+			nm := strings.Join(strings.Fields(kv.Value[0]), " ")
+			if len(nm) == 0 {
+				return nil, errors.New("taxon without identification")
+			}
+			go db.searchTaxon(l, nm, kvs)
 			ok = true
 			break
 		}
@@ -281,20 +306,23 @@ func (db *DB) searchTaxon(l *listScanner, name string, kvs []jdh.KeyValue) {
 	var pName string
 	var rank jdh.Rank
 	for _, kv := range kvs {
+		if len(kv.Value) == 0 {
+			continue
+		}
 		switch kv.Key {
 		case jdh.TaxParent:
-			pId, _ = strconv.ParseInt(kv.Value, 10, 64)
+			pId, _ = strconv.ParseInt(kv.Value[0], 10, 64)
 		case jdh.TaxRank:
-			rank = jdh.GetRank(kv.Value)
+			rank = jdh.GetRank(kv.Value[0])
 		case jdh.TaxParentName:
-			pName = strings.Join(strings.Fields(kv.Value), " ")
+			pName = strings.ToLower(strings.Join(strings.Fields(kv.Value[0]), " "))
 		}
 	}
+	vals := url.Values{}
+	vals.Add("name", nm)
 	for off := int64(0); ; {
-		vals := url.Values{}
-		vals.Add("name", nm)
 		if off > 0 {
-			vals.Add("offset", strconv.FormatInt(off, 10))
+			vals.Set("offset", strconv.FormatInt(off, 10))
 		}
 		request := wsHead + "species?" + vals.Encode()
 		an := new(spAnswer)

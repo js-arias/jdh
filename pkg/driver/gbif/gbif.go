@@ -63,6 +63,10 @@ func (db *DB) Get(table jdh.Table, id string) (jdh.Scanner, error) {
 		return nil, errors.New("database already closed")
 	}
 	switch table {
+	case jdh.Datasets:
+		return db.getSet(id)
+	case jdh.Specimens:
+		return db.specimen(id)
 	case jdh.Taxonomy:
 		return db.taxon(id)
 	}
@@ -74,10 +78,14 @@ func (db *DB) List(table jdh.Table, args *jdh.Values) (jdh.ListScanner, error) {
 	if db.isClosed {
 		return nil, errors.New("database already closed")
 	}
-	if len(args.KV) == 0 {
+	if args == nil {
 		return nil, errors.New("empty argument list")
 	}
 	switch table {
+	case jdh.Datasets:
+		return db.listSet(args.KV)
+	case jdh.Specimens:
+		return db.occurrences(args.KV)
 	case jdh.Taxonomy:
 		return db.taxonList(args.KV)
 	}

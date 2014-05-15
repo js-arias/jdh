@@ -132,7 +132,7 @@ type Table string
 // this structure most code should use values.
 type KeyValue struct {
 	Key   Key
-	Value string
+	Value []string
 }
 
 // Values kepts a list of key:value pairs used for jdh database queries.
@@ -143,7 +143,7 @@ type Values struct {
 }
 
 // Add adds a new key:value pair. If the key is already assigned it will
-// replace the previous value.
+// append the value.
 func (v *Values) Add(key Key, value string) {
 	key = Key(strings.TrimSpace(string(key)))
 	if len(key) == 0 {
@@ -152,11 +152,42 @@ func (v *Values) Add(key Key, value string) {
 	value = strings.Join(strings.Fields(value), " ")
 	for i, kv := range v.KV {
 		if kv.Key == key {
-			v.KV[i].Value = value
+			if len(value) > 0 {
+				v.KV[i].Value = append(v.KV[i].Value, value)
+			}
 			return
 		}
 	}
-	v.KV = append(v.KV, KeyValue{Key: key, Value: value})
+	if len(value) > 0 {
+		v.KV = append(v.KV, KeyValue{Key: key, Value: []string{value}})
+	} else {
+		v.KV = append(v.KV, KeyValue{Key: key})
+	}
+}
+
+// Set sets a key:value pair. If the key is already assigned, it will deletes
+// the old content.
+func (v *Values) Set(key Key, value string) {
+	key = Key(strings.TrimSpace(string(key)))
+	if len(key) == 0 {
+		return
+	}
+	value = strings.Join(strings.Fields(value), " ")
+	for i, kv := range v.KV {
+		if kv.Key == key {
+			if len(value) > 0 {
+				v.KV[i].Value = []string{value}
+			} else {
+				v.KV[i].Value = nil
+			}
+			return
+		}
+	}
+	if len(value) > 0 {
+		v.KV = append(v.KV, KeyValue{Key: key, Value: []string{value}})
+	} else {
+		v.KV = append(v.KV, KeyValue{Key: key})
+	}
 }
 
 // Reset cleans the key-values stored in values.

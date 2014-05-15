@@ -28,10 +28,10 @@ type Taxon struct {
 	// id of the parent taxon.
 	Parent string
 
-	// extern identifiers of the taxon
+	// extern identifiers of the taxon.
 	Extern []string
 
-	// free text comment about the taxon
+	// free text comment about the taxon.
 	Comment string
 }
 

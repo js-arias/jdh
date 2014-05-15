@@ -57,8 +57,8 @@ Options
 }
 
 func init() {
-	txDel.Flag.BoolVar(&collFlag, "collapse", false, "")
-	txDel.Flag.BoolVar(&collFlag, "c", false, "")
+	txDel.Flag.BoolVar(&colpFlag, "collapse", false, "")
+	txDel.Flag.BoolVar(&colpFlag, "c", false, "")
 	txDel.Flag.StringVar(&idFlag, "id", "", "")
 	txDel.Flag.StringVar(&idFlag, "i", "", "")
 	txDel.Flag.StringVar(&portFlag, "port", "", "")
@@ -92,7 +92,7 @@ func txDelRun(c *cmdapp.Command, args []string) {
 		c.Usage()
 	}
 	vals := new(jdh.Values)
-	if collFlag {
+	if colpFlag {
 		if len(tax.Parent) > 0 {
 			vals.Add(jdh.KeyId, tax.Id)
 			vals.Add(jdh.TaxSynonym, "")

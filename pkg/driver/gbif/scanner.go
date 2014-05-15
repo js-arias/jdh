@@ -21,6 +21,10 @@ func (g *getScanner) Scan(dest interface{}) error {
 		return g.err
 	}
 	switch v := dest.(type) {
+	case *jdh.Dataset:
+		*v = *g.val.(*jdh.Dataset)
+	case *jdh.Specimen:
+		*v = *g.val.(*jdh.Specimen)
 	case *jdh.Taxon:
 		*v = *g.val.(*jdh.Taxon)
 	}
@@ -49,6 +53,10 @@ func (l *listScanner) Scan(dest interface{}) error {
 			return io.EOF
 		}
 		switch v := dest.(type) {
+		case *jdh.Dataset:
+			*v = *val.(*jdh.Dataset)
+		case *jdh.Specimen:
+			*v = *val.(*jdh.Specimen)
 		case *jdh.Taxon:
 			*v = *val.(*jdh.Taxon)
 		}
