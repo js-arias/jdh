@@ -216,13 +216,13 @@ func spInTxt(c *cmdapp.Command, fname, parent string, rank jdh.Rank, set *jdh.Da
 			Dataset: sId,
 		}
 		if geography.IsLon(lon) && geography.IsLat(lat) {
-			spe.Location.GeoRef.Point = geography.Point{Lon: lon, Lat: lat}
+			spe.Georef.Point = geography.Point{Lon: lon, Lat: lat}
 		} else {
 			if len(cat) == 0 {
 				fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr(fmt.Sprintf("invalid coordinates %.5f %.5f", lon, lat)))
 				continue
 			}
-			spe.Location.GeoRef.Point = geography.InvalidPoint()
+			spe.Georef = geography.InvalidGeoref()
 		}
 		_, err = localDB.Exec(jdh.Add, jdh.Specimens, spe)
 		if err != nil {
@@ -435,7 +435,7 @@ func spInNdm(c *cmdapp.Command, fname, parent string, rank jdh.Rank, set *jdh.Da
 					Taxon:   id,
 					Dataset: set.Id,
 				}
-				spe.Location.GeoRef.Point = geography.Point{Lon: lon, Lat: lat}
+				spe.Georef.Point = geography.Point{Lon: lon, Lat: lat}
 				_, err = localDB.Exec(jdh.Add, jdh.Specimens, spe)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr(err))

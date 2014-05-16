@@ -46,7 +46,6 @@ var (
 	addFlag     bool   // add georeferences, -a|--add
 	childFlag   bool   // children flag, -c|--children
 	corrFlag    bool   // correct a georeference, -c|--correct
-	delFlag     bool   // delete georeference, -d|--delete
 	dsetFlag    string // set dataset, -d|--dataset
 	geoRefFlag  bool   // georef flag -g|--georef
 	countryFlag string // set country, -r|--coutry

@@ -118,20 +118,20 @@ func spInfoRun(c *cmdapp.Command, args []string) {
 			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeDeterminer, spe.Determiner)
 			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeCollector, spe.Collector)
 			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeDate, spe.Date.Format(jdh.Iso8601))
-			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.LocCountry, spe.Location.Country)
-			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.LocState, spe.Location.State)
-			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.LocCounty, spe.Location.County)
-			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.LocLocality, spe.Location.Locality)
-			if spe.Location.GeoRef.Point.IsValid() {
-				fmt.Fprintf(os.Stdout, "%s=%.8f,%.8f\n", jdh.LocLonLat, spe.Location.GeoRef.Point.Lon, spe.Location.GeoRef.Point.Lat)
-				fmt.Fprintf(os.Stdout, "%s=%d\n", jdh.LocUncertainty, spe.Location.GeoRef.Uncertainty)
-				fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.LocSource, spe.Location.GeoRef.Source)
-				fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.LocValidation, spe.Location.GeoRef.Validation)
+			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.GeoCountry, spe.Geography.Country)
+			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.GeoState, spe.Geography.State)
+			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.GeoCounty, spe.Geography.County)
+			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeLocality, spe.Locality)
+			if spe.Georef.IsValid() {
+				fmt.Fprintf(os.Stdout, "%s=%.8f,%.8f\n", jdh.GeoLonLat, spe.Georef.Point.Lon, spe.Georef.Point.Lat)
+				fmt.Fprintf(os.Stdout, "%s=%d\n", jdh.GeoUncertainty, spe.Georef.Uncertainty)
+				fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.GeoSource, spe.Georef.Source)
+				fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.GeoValidation, spe.Georef.Validation)
 			} else {
-				fmt.Fprintf(os.Stdout, "%s=\n", jdh.LocLonLat)
-				fmt.Fprintf(os.Stdout, "%s=0\n", jdh.LocUncertainty)
-				fmt.Fprintf(os.Stdout, "%s=\n", jdh.LocSource)
-				fmt.Fprintf(os.Stdout, "%s=\n", jdh.LocValidation)
+				fmt.Fprintf(os.Stdout, "%s=\n", jdh.GeoLonLat)
+				fmt.Fprintf(os.Stdout, "%s=0\n", jdh.GeoUncertainty)
+				fmt.Fprintf(os.Stdout, "%s=\n", jdh.GeoSource)
+				fmt.Fprintf(os.Stdout, "%s=\n", jdh.GeoValidation)
 			}
 			for _, e := range spe.Extern {
 				fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.KeyExtern, e)
@@ -156,37 +156,37 @@ func spInfoRun(c *cmdapp.Command, args []string) {
 			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeCollector, spe.Collector)
 		case jdh.SpeDate:
 			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeDate, spe.Date.Format(jdh.Iso8601))
-		case jdh.LocCountry:
-			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.LocCountry, spe.Location.Country)
-		case jdh.LocState:
-			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.LocState, spe.Location.State)
-		case jdh.LocCounty:
-			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.LocCounty, spe.Location.County)
-		case jdh.LocLocality:
-			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.LocLocality, spe.Location.Locality)
-		case jdh.LocLonLat:
-			if spe.Location.GeoRef.Point.IsValid() {
-				fmt.Fprintf(os.Stdout, "%s=%.8f,%.8f\n", jdh.LocLonLat, spe.Location.GeoRef.Point.Lon, spe.Location.GeoRef.Point.Lat)
+		case jdh.GeoCountry:
+			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.GeoCountry, spe.Geography.Country)
+		case jdh.GeoState:
+			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.GeoState, spe.Geography.State)
+		case jdh.GeoCounty:
+			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.GeoCounty, spe.Geography.County)
+		case jdh.SpeLocality:
+			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeLocality, spe.Locality)
+		case jdh.GeoLonLat:
+			if spe.Georef.IsValid() {
+				fmt.Fprintf(os.Stdout, "%s=%.8f,%.8f\n", jdh.GeoLonLat, spe.Georef.Point.Lon, spe.Georef.Point.Lat)
 			} else {
-				fmt.Fprintf(os.Stdout, "%s=\n", jdh.LocLonLat)
+				fmt.Fprintf(os.Stdout, "%s=\n", jdh.GeoLonLat)
 			}
-		case jdh.LocUncertainty:
-			if spe.Location.GeoRef.Point.IsValid() {
-				fmt.Fprintf(os.Stdout, "%s=%d\n", jdh.LocUncertainty, spe.Location.GeoRef.Uncertainty)
+		case jdh.GeoUncertainty:
+			if spe.Georef.IsValid() {
+				fmt.Fprintf(os.Stdout, "%s=%d\n", jdh.GeoUncertainty, spe.Georef.Uncertainty)
 			} else {
-				fmt.Fprintf(os.Stdout, "%s=0\n", jdh.LocUncertainty)
+				fmt.Fprintf(os.Stdout, "%s=0\n", jdh.GeoUncertainty)
 			}
-		case jdh.LocSource:
-			if spe.Location.GeoRef.Point.IsValid() {
-				fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.LocSource, spe.Location.GeoRef.Source)
+		case jdh.GeoSource:
+			if spe.Georef.IsValid() {
+				fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.GeoSource, spe.Georef.Source)
 			} else {
-				fmt.Fprintf(os.Stdout, "%s=\n", jdh.LocSource)
+				fmt.Fprintf(os.Stdout, "%s=\n", jdh.GeoSource)
 			}
-		case jdh.LocValidation:
-			if spe.Location.GeoRef.Point.IsValid() {
-				fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.LocValidation, spe.Location.GeoRef.Validation)
+		case jdh.GeoValidation:
+			if spe.Georef.IsValid() {
+				fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.GeoValidation, spe.Georef.Validation)
 			} else {
-				fmt.Fprintf(os.Stdout, "%s=\n", jdh.LocValidation)
+				fmt.Fprintf(os.Stdout, "%s=\n", jdh.GeoValidation)
 			}
 		case jdh.KeyExtern:
 			for _, e := range spe.Extern {
@@ -224,28 +224,28 @@ func spInfoRun(c *cmdapp.Command, args []string) {
 		if !spe.Date.IsZero() {
 			fmt.Fprintf(os.Stdout, "%-16s %s\n", "Date:", spe.Date.Format(jdh.Iso8601))
 		}
-		if len(spe.Location.Country) > 0 {
-			fmt.Fprintf(os.Stdout, "%-16s %s\n", "Country:", spe.Location.Country.Name())
+		if len(spe.Geography.Country) > 0 {
+			fmt.Fprintf(os.Stdout, "%-16s %s\n", "Country:", spe.Geography.Country.Name())
 		}
-		if len(spe.Location.State) > 0 {
-			fmt.Fprintf(os.Stdout, "%-16s %s\n", "State:", spe.Location.State)
+		if len(spe.Geography.State) > 0 {
+			fmt.Fprintf(os.Stdout, "%-16s %s\n", "State:", spe.Geography.State)
 		}
-		if len(spe.Location.County) > 0 {
-			fmt.Fprintf(os.Stdout, "%-16s %s\n", "County:", spe.Location.County)
+		if len(spe.Geography.County) > 0 {
+			fmt.Fprintf(os.Stdout, "%-16s %s\n", "County:", spe.Geography.County)
 		}
-		if len(spe.Location.Locality) > 0 {
-			fmt.Fprintf(os.Stdout, "%-16s %s\n", "Locality:", spe.Location.Locality)
+		if len(spe.Locality) > 0 {
+			fmt.Fprintf(os.Stdout, "%-16s %s\n", "Locality:", spe.Locality)
 		}
-		if spe.Location.GeoRef.Point.IsValid() {
-			fmt.Fprintf(os.Stdout, "%-16s %.8f, %.8f\n", "LonLat:", spe.Location.GeoRef.Point.Lon, spe.Location.GeoRef.Point.Lat)
-			if spe.Location.GeoRef.Uncertainty != 0 {
-				fmt.Fprintf(os.Stdout, "%-16s %d\n", "Uncertainty:", spe.Location.GeoRef.Uncertainty)
+		if spe.Georef.IsValid() {
+			fmt.Fprintf(os.Stdout, "%-16s %.8f, %.8f\n", "LonLat:", spe.Georef.Point.Lon, spe.Georef.Point.Lat)
+			if spe.Georef.Uncertainty != 0 {
+				fmt.Fprintf(os.Stdout, "%-16s %d\n", "Uncertainty:", spe.Georef.Uncertainty)
 			}
-			if len(spe.Location.GeoRef.Source) > 0 {
-				fmt.Fprintf(os.Stdout, "%-16s %s\n", "Source:", spe.Location.GeoRef.Source)
+			if len(spe.Georef.Source) > 0 {
+				fmt.Fprintf(os.Stdout, "%-16s %s\n", "Source:", spe.Georef.Source)
 			}
-			if len(spe.Location.GeoRef.Validation) > 0 {
-				fmt.Fprintf(os.Stdout, "%-16s %s\n", "Validation:", spe.Location.GeoRef.Validation)
+			if len(spe.Georef.Validation) > 0 {
+				fmt.Fprintf(os.Stdout, "%-16s %s\n", "Validation:", spe.Georef.Validation)
 			}
 		}
 		if len(spe.Extern) > 0 {
@@ -284,35 +284,35 @@ func spInfoRun(c *cmdapp.Command, args []string) {
 		fmt.Fprintf(os.Stdout, "%s\n", spe.Collector)
 	case jdh.SpeDate:
 		fmt.Fprintf(os.Stdout, "%s\n", spe.Date.Format(jdh.Iso8601))
-	case jdh.LocCountry:
-		fmt.Fprintf(os.Stdout, "%s\n", spe.Location.Country)
-	case jdh.LocState:
-		fmt.Fprintf(os.Stdout, "%s\n", spe.Location.State)
-	case jdh.LocCounty:
-		fmt.Fprintf(os.Stdout, "%s\n", spe.Location.County)
-	case jdh.LocLocality:
-		fmt.Fprintf(os.Stdout, "%s\n", spe.Location.Locality)
-	case jdh.LocLonLat:
-		if spe.Location.GeoRef.Point.IsValid() {
-			fmt.Fprintf(os.Stdout, "%.8f\t%.8f\n", spe.Location.GeoRef.Point.Lon, spe.Location.GeoRef.Point.Lat)
+	case jdh.GeoCountry:
+		fmt.Fprintf(os.Stdout, "%s\n", spe.Geography.Country)
+	case jdh.GeoState:
+		fmt.Fprintf(os.Stdout, "%s\n", spe.Geography.State)
+	case jdh.GeoCounty:
+		fmt.Fprintf(os.Stdout, "%s\n", spe.Geography.County)
+	case jdh.SpeLocality:
+		fmt.Fprintf(os.Stdout, "%s\n", spe.Locality)
+	case jdh.GeoLonLat:
+		if spe.Georef.IsValid() {
+			fmt.Fprintf(os.Stdout, "%.8f\t%.8f\n", spe.Georef.Point.Lon, spe.Georef.Point.Lat)
 		} else {
 			fmt.Fprintf(os.Stdout, "\n")
 		}
-	case jdh.LocUncertainty:
-		if spe.Location.GeoRef.Point.IsValid() {
-			fmt.Fprintf(os.Stdout, "%d\n", spe.Location.GeoRef.Uncertainty)
+	case jdh.GeoUncertainty:
+		if spe.Georef.IsValid() {
+			fmt.Fprintf(os.Stdout, "%d\n", spe.Georef.Uncertainty)
 		} else {
 			fmt.Fprintf(os.Stdout, "\n")
 		}
-	case jdh.LocSource:
-		if spe.Location.GeoRef.Point.IsValid() {
-			fmt.Fprintf(os.Stdout, "%s\n", spe.Location.GeoRef.Source)
+	case jdh.GeoSource:
+		if spe.Georef.IsValid() {
+			fmt.Fprintf(os.Stdout, "%s\n", spe.Georef.Source)
 		} else {
 			fmt.Fprintf(os.Stdout, "\n")
 		}
-	case jdh.LocValidation:
-		if spe.Location.GeoRef.Point.IsValid() {
-			fmt.Fprintf(os.Stdout, "%s\n", spe.Location.GeoRef.Validation)
+	case jdh.GeoValidation:
+		if spe.Georef.IsValid() {
+			fmt.Fprintf(os.Stdout, "%s\n", spe.Georef.Validation)
 		} else {
 			fmt.Fprintf(os.Stdout, "\n")
 		}

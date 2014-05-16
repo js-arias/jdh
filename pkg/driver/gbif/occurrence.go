@@ -48,10 +48,11 @@ type occurrence struct {
 	IdentifierName      string // indetifiedby
 	CollectorName       string // collector
 	OccurrenceDate      string // date
-	Country             string // country
+	CountryCode         string // country
 	StateProvince       string // state
 	County              string // county
 	Locality            string // locality
+	VerbatimLocality    string
 	DecimalLongitude    float64
 	DecimalLatitude     float64
 	GeoreferenceSources string
@@ -74,13 +75,16 @@ func (o *occurrence) copy() *jdh.Specimen {
 		Determiner: strings.Join(strings.Fields(o.IdentifierName), " "),
 		Collector:  strings.Join(strings.Fields(o.CollectorName), " "),
 		Date:       t,
-		Location: geography.Location{
-			Country:  geography.GetCountry(o.Country),
-			State:    strings.Join(strings.Fields(o.StateProvince), " "),
-			County:   strings.Join(strings.Fields(o.County), " "),
-			Locality: strings.Join(strings.Fields(o.Locality), " "),
+		Geography: geography.Location{
+			Country: geography.GetCountry(o.CountryCode),
+			State:   strings.Join(strings.Fields(o.StateProvince), " "),
+			County:  strings.Join(strings.Fields(o.County), " "),
 		},
-		Comment: strings.TrimSpace(o.FieldNotes + "\n" + o.OccurrenceRemarks),
+		Locality: strings.Join(strings.Fields(o.Locality), " "),
+		Comment:  strings.TrimSpace(o.FieldNotes + "\n" + o.OccurrenceRemarks),
+	}
+	if (len(spe.Locality) == 0) && (len(o.VerbatimLocality) > 0) {
+		spe.Locality = strings.Join(strings.Fields(o.VerbatimLocality), " ")
 	}
 	lon, lat := float64(360), float64(360)
 	if o.DecimalLongitude != 0 {
@@ -90,10 +94,10 @@ func (o *occurrence) copy() *jdh.Specimen {
 		lat = o.DecimalLatitude
 	}
 	if geography.IsLon(lon) && geography.IsLat(lat) {
-		spe.Location.GeoRef.Point = geography.Point{Lon: lon, Lat: lat}
-		spe.Location.GeoRef.Source = strings.Join(strings.Fields(o.GeoreferenceSources), " ")
+		spe.Georef.Point = geography.Point{Lon: lon, Lat: lat}
+		spe.Georef.Source = strings.Join(strings.Fields(o.GeoreferenceSources), " ")
 	} else {
-		spe.Location.GeoRef.Point = geography.InvalidPoint()
+		spe.Georef = geography.InvalidGeoref()
 	}
 	return spe
 }
@@ -136,11 +140,11 @@ func (db *DB) occurrences(kvs []jdh.KeyValue) (jdh.ListScanner, error) {
 				continue
 			}
 			switch kv.Key {
-			case jdh.LocCountry:
+			case jdh.GeoCountry:
 				for _, v := range kv.Value {
 					vals.Add("country", string(geography.GetCountry(v)))
 				}
-			case jdh.LocGeoRef:
+			case jdh.SpeGeoref:
 				if kv.Value[0] == "true" {
 					vals.Set("has_coordinate", "true")
 				} else if kv.Value[0] == "false" {

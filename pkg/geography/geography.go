@@ -11,14 +11,11 @@ import (
 	"math"
 )
 
-// Location is an specific geographic location. A location can be
-// georeferenced.
+// Location is an geographic location hierarchy.
 type Location struct {
-	Country  Country
-	State    string
-	County   string
-	Locality string
-	GeoRef   Georeference
+	Country Country
+	State   string
+	County  string
 }
 
 // IsValid returns true if the location is a valid one (i.e. with both
@@ -27,10 +24,13 @@ type Location struct {
 // validity is only a term to be used in the context of geolocation
 // assignation or validation using a Geolocater interface.
 func (l *Location) IsValid() bool {
-	if (len(l.Country) == 0) || (len(l.Locality) == 0) {
+	if len(l.Country) == 0 {
 		return false
 	}
-	return true
+	if GetCountry(string(l.Country)) == l.Country {
+		return true
+	}
+	return false
 }
 
 // Georeference is the information of a particular georeference, including
@@ -40,6 +40,17 @@ type Georeference struct {
 	Uncertainty uint   // georeference uncertainty in meters
 	Source      string // source of georeference
 	Validation  string // source of the georeference validation
+}
+
+// IsValid returns true if the georeference is a valid one (i.e. its point
+// is valid.
+func (g *Georeference) IsValid() bool {
+	return g.Point.IsValid()
+}
+
+// InvalidGeoref sets an invalid georeference.
+func InvalidGeoref() Georeference {
+	return Georeference{Point: InvalidPoint()}
 }
 
 // Maximum and minimum values for geographic coordinates
@@ -123,10 +134,10 @@ type Gazetter interface {
 	// location as interpreted by the geolocation service. Uncertainty
 	// indicates the maximum uncertainty (in meters) accepted for the
 	// point (with 0 any uncertainty will be accepted).
-	Locate(loc *Location, uncertainty uint) (Georeference, error)
+	Locate(loc *Location, locality string, uncertainty uint) (Georeference, error)
 
 	// List returns a list of points that fullfill a given location.
-	List(loc *Location, uncertainty uint) ([]Georeference, error)
+	List(loc *Location, locality string, uncertainty uint) ([]Georeference, error)
 }
 
 // gazette holds the information of a geolocation service.

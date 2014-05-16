@@ -421,7 +421,7 @@ Validate and add specimen georeferences
 
 Synopsis
 
-    jdh sp.gref [-a|--add] [-c|--correct] [-d|--delete] [-p|--port value]
+    jdh sp.gref [-a|--add] [-c|--correct] [-p|--port value]
 	[-t|--taxon value] [-u|--uncert value] [-v|--verbose]
 	[<name> [<parentname>]]
 
@@ -436,9 +436,7 @@ but not corrected, or deleted.
 
 By default, it just print the specimens that fail the validation. With -c,
 --correct option, it will try to correct the georeference, if possible (check
-for flips in latitude and longitude, for example). With -d, --delete option,
-georeferences from specimens that fail the validation, and unable to be
-corrected will be eliminated.
+for flips in latitude and longitude, for example).
 
 With -a, --add option, non georeferences specimens will be searched, and if a
 valid location is found (under a given bound, defined by -u, --uncert option),
@@ -457,11 +455,6 @@ Options
       If set, it will try to correct invalid georeferences. It will try it
       by flipping lon, lat values, and changing lon, lat values sings.
 
-    -d
-    --delete
-      If set, if an specimen can not be corrected, then the georeference (but
-      not the specimen) will be removed from the database.
-
     -p value
     --port value
       Sets the port in which the server will be listening. By default the
@@ -476,7 +469,13 @@ Options
       Set valid uncertainty (in meters), values below the given uncertainty
       will be scored as validated, or added, if -a, --add option is defined.
       Default value is 110000, which is roughly, about 1º at the equator. With
-      0, the uncertainty values defined in each specimen will be used.
+      0, the uncertainty values defined in each specimen will be used. Maximum
+      value is 200000 (200 km).
+
+    -v
+    --verbose
+      If set, details on the error (if available), will be printed.
+
 
     <name>
       Search for the indicated name. If there are more than one taxon,

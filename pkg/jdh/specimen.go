@@ -33,17 +33,23 @@ type Specimen struct {
 	// <instituion acronym>:<collection acronym>:<catalog id>.
 	Catalog string
 
-	// The person who determined the identity the specimen.
+	// the person who determined the identity the specimen.
 	Determiner string
 
-	// The person who collected the specimen.
+	// the person who collected the specimen.
 	Collector string
 
-	// The time and date of the collection event.
+	// the time and date of the collection event.
 	Date time.Time
 
-	// location data of the collection event.
-	Location geography.Location
+	// general geographic location data of the collection event.
+	Geography geography.Location
+
+	// locality of the collection event.
+	Locality string
+
+	// georeference of the specimen, if any.
+	Georef geography.Georeference
 
 	// extern identifiers of the specimen.
 	Extern []string
@@ -118,6 +124,13 @@ const (
 	// The person who determined the identity the specimen.
 	SpeDeterminer = "determiner"
 
+	// Point locality of the specimen sample.
+	SpeLocality = "locality"
+
+	// Used in list operations to retrieve only records with or without
+	// a georeference. Valid values are "true" and "false"
+	SpeGeoref = "georef"
+
 	// A reference to the specimen.
 	SpeReference = "reference"
 
@@ -132,34 +145,27 @@ const (
 	SpeTaxonParent = "parent"
 )
 
-// Key values used for location data in the specimens table.
+// Key values used for geography of an specimen.
 const (
 	// Country of the specimen sample location, using ISO 3166-1 alpha-2 code.
-	LocCountry Key = "coutry"
+	GeoCountry Key = "coutry"
 
 	// County, Municipality (or equivalent) of the specimen sample
 	// location.
-	LocCounty = "county"
-
-	// Used in list operations to retrieve only records with or without
-	// a georeference. Valid values are "true" and "false"
-	LocGeoRef = "georef"
-
-	// Point locality of the specimen sample.
-	LocLocality = "locality"
+	GeoCounty = "county"
 
 	// Longitude and latitude of the location, in the form "lon,lat"
-	LocLonLat = "lonLat"
+	GeoLonLat = "lonLat"
 
 	// Source of the georeference, for example, gps data or a gazetter.
-	LocSource = "source"
+	GeoSource = "source"
 
 	// State, Province (or equivalent) of the specimen sample location.
-	LocState = "state"
+	GeoState = "state"
 
 	// Uncertainty of the georeference in meters.
-	LocUncertainty = "uncertainty"
+	GeoUncertainty = "uncertainty"
 
 	// Validation of the georeference.
-	LocValidation = "validation"
+	GeoValidation = "validation"
 )

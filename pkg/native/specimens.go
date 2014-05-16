@@ -115,16 +115,15 @@ func (s *specimens) validate(spe *jdh.Specimen) error {
 	if !s.db.t.isInDB(spe.Taxon) {
 		return fmt.Errorf("taxon %s [associated with specimen %s] not in database", spe.Taxon, spe.Id)
 	}
-	loc := &spe.Location
-	if (loc.GeoRef.Point.Lon == 0) || (loc.GeoRef.Point.Lon == 1) || (loc.GeoRef.Point.Lat == 0) || (loc.GeoRef.Point.Lat == 1) {
-		loc.GeoRef.Point = geography.InvalidPoint()
+	if !spe.Geography.IsValid() {
+		spe.Geography = geography.Location{}
 	}
-	if !loc.GeoRef.Point.IsValid() {
-		loc.GeoRef.Point = geography.InvalidPoint()
-		loc.GeoRef.Uncertainty = 0
-		loc.GeoRef.Source = ""
-		loc.GeoRef.Validation = ""
+	if !spe.Georef.IsValid() {
+		spe.Georef = geography.InvalidGeoref()
+	} else if (spe.Georef.Point.Lon == 0) || (spe.Georef.Point.Lon == 1) || (spe.Georef.Point.Lat == 0) || (spe.Georef.Point.Lat == 1) {
+		spe.Georef = geography.InvalidGeoref()
 	}
+
 	if spe.Basis > jdh.Remote {
 		spe.Basis = jdh.UnknownBasis
 	}
@@ -374,7 +373,7 @@ func (s *specimens) list(vals []jdh.KeyValue) (*list.List, error) {
 			continue
 		}
 		switch kv.Key {
-		case jdh.LocCountry:
+		case jdh.GeoCountry:
 			for e := l.Front(); e != nil; {
 				nx := e.Next()
 				spe := e.Value.(*jdh.Specimen)
@@ -384,7 +383,7 @@ func (s *specimens) list(vals []jdh.KeyValue) (*list.List, error) {
 					if len(c) == 0 {
 						continue
 					}
-					if spe.Location.Country == c {
+					if spe.Geography.Country == c {
 						remove = false
 						break
 					}
@@ -394,7 +393,7 @@ func (s *specimens) list(vals []jdh.KeyValue) (*list.List, error) {
 				}
 				e = nx
 			}
-		case jdh.LocGeoRef:
+		case jdh.SpeGeoref:
 			if (kv.Value[0] != "true") && (kv.Value[0] != "false") {
 				continue
 			}
@@ -405,7 +404,7 @@ func (s *specimens) list(vals []jdh.KeyValue) (*list.List, error) {
 			for e := l.Front(); e != nil; {
 				nx := e.Next()
 				spe := e.Value.(*jdh.Specimen)
-				if spe.Location.GeoRef.Point.IsValid() != ok {
+				if spe.Georef.IsValid() != ok {
 					l.Remove(e)
 				}
 				e = nx
@@ -515,6 +514,15 @@ func (s *specimens) set(vals []jdh.KeyValue) error {
 				continue
 			}
 			spe.Determiner = v
+		case jdh.SpeLocality:
+			v := ""
+			if len(kv.Value) > 0 {
+				v = strings.Join(strings.Fields(kv.Value[0]), " ")
+			}
+			if spe.Locality == v {
+				continue
+			}
+			spe.Locality = v
 		case jdh.SpeReference:
 			v := ""
 			if len(kv.Value) > 0 {
@@ -593,46 +601,34 @@ func (s *specimens) set(vals []jdh.KeyValue) error {
 			if !ok {
 				continue
 			}
-		case jdh.LocCountry:
+		case jdh.GeoCountry:
 			v := geography.Country("")
 			if len(kv.Value) > 0 {
 				v = geography.GetCountry(strings.Join(strings.Fields(kv.Value[0]), " "))
 			}
-			if spe.Location.Country == v {
+			if spe.Geography.Country == v {
 				continue
 			}
-			spe.Location.Country = v
-		case jdh.LocCounty:
+			spe.Geography.Country = v
+		case jdh.GeoCounty:
 			v := ""
 			if len(kv.Value) > 0 {
 				v = strings.Join(strings.Fields(kv.Value[0]), " ")
 			}
-			if spe.Location.County == v {
+			if spe.Geography.County == v {
 				continue
 			}
-			spe.Location.County = v
-		case jdh.LocLocality:
-			v := ""
-			if len(kv.Value) > 0 {
-				v = strings.Join(strings.Fields(kv.Value[0]), " ")
-			}
-			if spe.Location.Locality == v {
-				continue
-			}
-			spe.Location.Locality = v
-		case jdh.LocLonLat:
+			spe.Geography.County = v
+		case jdh.GeoLonLat:
 			v := ""
 			if len(kv.Value) > 0 {
 				v = strings.TrimSpace(kv.Value[0])
 			}
 			if len(v) == 0 {
-				if !spe.Location.GeoRef.Point.IsValid() {
+				if !spe.Georef.IsValid() {
 					continue
 				}
-				spe.Location.GeoRef.Point = geography.InvalidPoint()
-				spe.Location.GeoRef.Uncertainty = 0
-				spe.Location.GeoRef.Source = ""
-				spe.Location.GeoRef.Validation = ""
+				spe.Georef = geography.InvalidGeoref()
 				break
 			}
 			coor := strings.Split(v, ",")
@@ -653,30 +649,30 @@ func (s *specimens) set(vals []jdh.KeyValue) error {
 			if (!geography.IsLon(lon)) || (!geography.IsLat(lat)) {
 				return errors.New("invalid geographic coordinate values")
 			}
-			spe.Location.GeoRef.Point = geography.Point{Lon: lon, Lat: lat}
-		case jdh.LocSource:
-			if !spe.Location.GeoRef.Point.IsValid() {
+			spe.Georef.Point = geography.Point{Lon: lon, Lat: lat}
+		case jdh.GeoSource:
+			if !spe.Georef.IsValid() {
 				continue
 			}
 			v := ""
 			if len(kv.Value) > 0 {
 				v = strings.Join(strings.Fields(kv.Value[0]), " ")
 			}
-			if spe.Location.GeoRef.Source == v {
+			if spe.Georef.Source == v {
 				continue
 			}
-			spe.Location.GeoRef.Source = v
-		case jdh.LocState:
+			spe.Georef.Source = v
+		case jdh.GeoState:
 			v := ""
 			if len(kv.Value) > 0 {
 				v = strings.Join(strings.Fields(kv.Value[0]), " ")
 			}
-			if spe.Location.State == v {
+			if spe.Geography.State == v {
 				continue
 			}
-			spe.Location.State = v
-		case jdh.LocUncertainty:
-			if !spe.Location.GeoRef.Point.IsValid() {
+			spe.Geography.State = v
+		case jdh.GeoUncertainty:
+			if !spe.Georef.IsValid() {
 				continue
 			}
 			v := ""
@@ -688,22 +684,22 @@ func (s *specimens) set(vals []jdh.KeyValue) error {
 				return err
 			}
 			un := uint(un64)
-			if un == spe.Location.GeoRef.Uncertainty {
+			if un == spe.Georef.Uncertainty {
 				continue
 			}
-			spe.Location.GeoRef.Uncertainty = un
-		case jdh.LocValidation:
-			if !spe.Location.GeoRef.Point.IsValid() {
+			spe.Georef.Uncertainty = un
+		case jdh.GeoValidation:
+			if !spe.Georef.IsValid() {
 				continue
 			}
 			v := ""
 			if len(kv.Value) > 0 {
 				v = strings.Join(strings.Fields(kv.Value[0]), " ")
 			}
-			if spe.Location.GeoRef.Validation == v {
+			if spe.Georef.Validation == v {
 				continue
 			}
-			spe.Location.GeoRef.Validation = v
+			spe.Georef.Validation = v
 		default:
 			continue
 		}

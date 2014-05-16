@@ -227,9 +227,9 @@ func txInfoList(c *cmdapp.Command, db jdh.DB, pId string, valid bool) {
 		}
 		if first {
 			if valid {
-				fmt.Fprintf(os.Stdout, "Synonyms:\n")
-			} else {
 				fmt.Fprintf(os.Stdout, "Children taxa:\n")
+			} else {
+				fmt.Fprintf(os.Stdout, "Synonyms:\n")
 			}
 			first = false
 		}

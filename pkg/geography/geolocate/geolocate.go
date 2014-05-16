@@ -35,6 +35,7 @@ type point struct {
 
 type property struct {
 	UncertaintyRadiusMeters uint
+	Debug                   string
 }
 
 // service implements the geolocate web service.
@@ -54,10 +55,12 @@ func open(param string) (geography.Gazetter, error) {
 	return s, nil
 }
 
+// Name returns the name of the location service.
 func (s *service) Name() string {
 	return "GEOLocate Web Service"
 }
 
+// Close closes the service.
 func (s *service) Close() {
 	if s.isClosed {
 		return
@@ -65,25 +68,94 @@ func (s *service) Close() {
 	close(s.request)
 }
 
-func (s *service) Locate(l *geography.Location, uncertainty uint) (geography.Georeference, error) {
-	ls, err := s.List(l, uncertainty)
+// Locate returns the point and uncertainty associated with a location as
+// interpreted by the geolocation service. Uncertainty indicates the maximum
+// uncertainty (in meters) accepted for the point (with 0 any uncertainty
+// will be accepted).
+func (s *service) Locate(l *geography.Location, locality string, uncertainty uint) (geography.Georeference, error) {
+	ls, err := s.List(l, locality, uncertainty)
 	if err != nil {
 		return geography.Georeference{Point: geography.InvalidPoint()}, err
 	}
-	if len(ls) > 1 {
+	if len(ls) == 1 {
+		return ls[0], nil
+	}
+	if len(ls) == 0 {
+		return geography.Georeference{Point: geography.InvalidPoint()}, geography.ErrNotInDB
+	}
+	u := uncertainty
+	if u == 0 {
+		u = 200000
+	}
+	// set a mid point
+	var sLon, sLat float64
+	unc := uint(0)
+	for _, p := range ls {
+		sLon += p.Point.Lon
+		sLat += p.Point.Lat
+		if unc < p.Uncertainty {
+			unc = p.Uncertainty
+		}
+	}
+	den := float64(len(ls))
+	lon, lat := sLon/den, sLat/den
+	if !(geography.IsLon(lon) && geography.IsLat(lat)) {
 		return geography.Georeference{Point: geography.InvalidPoint()}, geography.ErrAmbiguous
 	}
-	return ls[0], nil
+	max := uint(0)
+	for _, p := range ls {
+		d := p.Point.Distance(lon, lat)
+		if d > max {
+			max = d
+			if (d + unc) > u {
+				break
+			}
+		}
+	}
+	p := ls[0]
+	p.Uncertainty = max + unc
+	if (p.Uncertainty > u) || (!p.IsValid()) {
+		return geography.Georeference{Point: geography.InvalidPoint()}, geography.ErrAmbiguous
+	}
+	p.Point = geography.Point{lon, lat}
+	return p, nil
 }
 
-func (s *service) List(l *geography.Location, uncertainty uint) ([]geography.Georeference, error) {
+// List returns a list of points that fullfill a given location.
+func (s *service) List(l *geography.Location, locality string, uncertainty uint) ([]geography.Georeference, error) {
 	if s.isClosed {
 		return nil, geography.ErrClosed
 	}
 	if !l.IsValid() {
 		return nil, geography.ErrNoLoc
 	}
-	req := wsHead + prepare(l)
+	var ls []geography.Georeference
+	var err error
+	if len(locality) > 0 {
+		ls, err = s.list(l, locality, uncertainty)
+		if err != nil {
+			if err != geography.ErrNotInDB {
+				return nil, err
+			}
+		}
+		if len(ls) > 0 {
+			return ls, nil
+		}
+	}
+	if len(l.County) > 0 {
+		return s.list(l, l.County, uncertainty)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if len(locality) == 0 {
+		return nil, geography.ErrNoLoc
+	}
+	return ls, nil
+}
+
+func (s *service) list(l *geography.Location, locality string, uncertainty uint) ([]geography.Georeference, error) {
+	req := wsHead + prepare(l, locality)
 	s.request <- req
 	a := <-s.answer
 	switch answer := a.(type) {
@@ -105,7 +177,7 @@ func (s *service) List(l *geography.Location, uncertainty uint) ([]geography.Geo
 						Lat: f.Geometry.Coordinates[1],
 					},
 					Uncertainty: f.Properties.UncertaintyRadiusMeters,
-					Source:      "online gazetter",
+					Source:      "online gazetter: " + s.Name(),
 					Validation:  s.Name(),
 				})
 				continue
@@ -117,7 +189,7 @@ func (s *service) List(l *geography.Location, uncertainty uint) ([]geography.Geo
 						Lat: f.Geometry.Coordinates[1],
 					},
 					Uncertainty: f.Properties.UncertaintyRadiusMeters,
-					Source:      "online gazetter",
+					Source:      "online gazetter: " + s.Name(),
 					Validation:  s.Name(),
 				})
 			}
@@ -127,10 +199,10 @@ func (s *service) List(l *geography.Location, uncertainty uint) ([]geography.Geo
 	return nil, geography.ErrNotInDB
 }
 
-func prepare(l *geography.Location) string {
+func prepare(l *geography.Location, locality string) string {
 	vals := url.Values{}
 	vals.Add("country", l.Country.Name())
-	vals.Add("locality", l.Locality)
+	vals.Add("locality", locality)
 	if len(l.State) > 0 {
 		vals.Add("state", l.State)
 	}
@@ -138,6 +210,7 @@ func prepare(l *geography.Location) string {
 		vals.Add("county", l.County)
 	}
 	vals.Add("enableH20", "false")
+	vals.Add("hwyX", "false")
 	vals.Add("fmt", "geojson")
 	return vals.Encode()
 }

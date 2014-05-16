@@ -146,12 +146,12 @@ func spLsRun(c *cmdapp.Command, args []string) {
 		vals.Add(jdh.SpeTaxon, tax.Id)
 	}
 	if len(countryFlag) > 0 {
-		vals.Add(jdh.LocCountry, countryFlag)
+		vals.Add(jdh.GeoCountry, countryFlag)
 	}
 	if geoRefFlag {
-		vals.Add(jdh.LocGeoRef, "true")
+		vals.Add(jdh.SpeGeoref, "true")
 	} else if noRefFlag {
-		vals.Add(jdh.LocGeoRef, "false")
+		vals.Add(jdh.SpeGeoref, "false")
 	}
 	l := speList(c, db, vals)
 	defer l.Close()
@@ -174,15 +174,15 @@ func spLsRun(c *cmdapp.Command, args []string) {
 		}
 		if verboseFlag {
 			fmt.Fprintf(os.Stdout, "%s %s %s\t%s %s", ct.Id, ct.Name, ct.Authority, spe.Id, spe.Catalog)
-			if spe.Location.GeoRef.Point.IsValid() {
-				fmt.Fprintf(os.Stdout, "\t%.5f %.5f %d", spe.Location.GeoRef.Point.Lon, spe.Location.GeoRef.Point.Lat, spe.Location.GeoRef.Uncertainty)
+			if spe.Georef.IsValid() {
+				fmt.Fprintf(os.Stdout, "\t%.5f %.5f %d", spe.Georef.Point.Lon, spe.Georef.Point.Lat, spe.Georef.Uncertainty)
 			}
 			fmt.Fprintf(os.Stdout, "\n")
 			continue
 		}
 		fmt.Fprintf(os.Stdout, "%s\t%s", ct.Name, spe.Catalog)
-		if spe.Location.GeoRef.Point.IsValid() {
-			fmt.Fprintf(os.Stdout, "\t%.5f %.5f", spe.Location.GeoRef.Point.Lon, spe.Location.GeoRef.Point.Lat)
+		if spe.Georef.IsValid() {
+			fmt.Fprintf(os.Stdout, "\t%.5f %.5f", spe.Georef.Point.Lon, spe.Georef.Point.Lat)
 		}
 		fmt.Fprintf(os.Stdout, "\n")
 	}

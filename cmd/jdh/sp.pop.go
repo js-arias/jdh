@@ -153,7 +153,7 @@ func spPopFetch(c *cmdapp.Command, tax *jdh.Taxon, prevRank, rank jdh.Rank) {
 	vals := new(jdh.Values)
 	vals.Add(jdh.SpeTaxon, eid)
 	if geoRefFlag {
-		vals.Add(jdh.LocGeoRef, "true")
+		vals.Add(jdh.SpeGeoref, "true")
 	}
 	l := speList(c, extDB, vals)
 	for {
@@ -188,11 +188,8 @@ func addToSpecimens(c *cmdapp.Command, src *jdh.Specimen, tax string) string {
 	dest.Id = ""
 	dest.Taxon = tax
 	dest.Extern = []string{extDBFlag + ":" + src.Id}
-	if !src.Location.GeoRef.Point.IsValid() {
-		dest.Location.GeoRef.Point = geography.InvalidPoint()
-		dest.Location.GeoRef.Uncertainty = 0
-		dest.Location.GeoRef.Source = ""
-		dest.Location.GeoRef.Validation = ""
+	if !src.Georef.IsValid() {
+		dest.Georef = geography.InvalidGeoref()
 	}
 	if len(src.Dataset) > 0 {
 		dest.Dataset = getValidDataset(c, src.Dataset)
