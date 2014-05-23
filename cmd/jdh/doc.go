@@ -383,7 +383,8 @@ Creates raster distributions from specimen data
 Synopsis
 
     jdh ra.mk [-e|--extdb name] [-p|--port value] [-r|--rank name]
-	[-s|--size value] [-t|--taxon value] [<name> [<parentname>]]
+	[-s|--size value] [-t|--taxon value] [-d|--validated]
+	[<name> [<parentname>]]
 
 Description
 
@@ -403,6 +404,11 @@ Options
     -e name
     --extdb name
       Sets the a extern database to extract distribution data.
+
+    -d
+    --validated
+      If set, only specimens with validated georeferences will be used to
+      build the raster.
 
     -p value
     --port value

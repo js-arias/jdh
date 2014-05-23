@@ -19,7 +19,8 @@ import (
 var raMk = &cmdapp.Command{
 	Name: "ra.mk",
 	Synopsis: `[-e|--extdb name] [-p|--port value] [-r|--rank name]
-	[-s|--size value] [-t|--taxon value] [<name> [<parentname>]]`,
+	[-s|--size value] [-t|--taxon value] [-d|--validated]
+	[<name> [<parentname>]]`,
 	Short:    "creates raster distributions from specimen data",
 	IsCommon: true,
 	Long: `
@@ -41,6 +42,11 @@ Options
     -e name
     --extdb name
       Sets the a extern database to extract distribution data.
+    
+    -d
+    --validated
+      If set, only specimens with validated georeferences will be used to
+      build the raster.
 
     -p value
     --port value
@@ -83,6 +89,8 @@ Options
 }
 
 func init() {
+	raMk.Flag.BoolVar(&validFlag, "validate", false, "")
+	raMk.Flag.BoolVar(&validFlag, "d", false, "")
 	raMk.Flag.StringVar(&extDBFlag, "extdb", "", "")
 	raMk.Flag.StringVar(&extDBFlag, "e", "", "")
 	raMk.Flag.StringVar(&portFlag, "port", "", "")
@@ -195,6 +203,9 @@ func raMkFetch(c *cmdapp.Command, spDB jdh.DB, tax *jdh.Taxon, prevRank, rank jd
 			os.Exit(1)
 		}
 		if !spe.Georef.IsValid() {
+			continue
+		}
+		if validFlag && (len(spe.Georef.Validation) == 0) {
 			continue
 		}
 		azm, inc := spe.Georef.Point.Lon+180, 90-spe.Georef.Point.Lat

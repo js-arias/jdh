@@ -20,6 +20,7 @@ var (
 	machineFlag bool   // set machine output, -m|--machine
 	matchFlag   bool   // set match option, -m|--match
 	updateFlag  bool   // set update option, -u|--update
+	validFlag   bool   // validate flag, -d|--validate
 	verboseFlag bool   // set command verbosity, -v|--verbose
 )
 
@@ -38,24 +39,19 @@ var (
 	popFlag     string // populate flag, -l|--populate
 	rankFlag    string // set a rank, -r|--rank
 	synonymFlag bool   // synonym flag, -s|--synonym
-	validFlag   bool   // validate flag, -d|--validate
 )
 
-// flags used by specimen commands
+// flags used by specimen and raster commands
 var (
-	addFlag     bool   // add georeferences, -a|--add
-	childFlag   bool   // children flag, -c|--children
-	corrFlag    bool   // correct a georeference, -c|--correct
-	dsetFlag    string // set dataset, -d|--dataset
-	geoRefFlag  bool   // georef flag -g|--georef
-	countryFlag string // set country, -r|--coutry
-	noRefFlag   bool   // no georef flag -n|--nogeoref
-	skipFlag    bool   // skip flag, -s|--skip
-	taxonFlag   string // set taxon, -t|--taxon
-	uncertFlag  int    // set uncertainty, -u|--uncert
-)
-
-// flags used by raster commands
-var (
-	sizeFlag float64 // set pixel size, -s|--size
+	addFlag     bool    // add georeferences, -a|--add
+	childFlag   bool    // children flag, -c|--children
+	corrFlag    bool    // correct a georeference, -c|--correct
+	dsetFlag    string  // set dataset, -d|--dataset
+	geoRefFlag  bool    // georef flag -g|--georef
+	countryFlag string  // set country, -r|--coutry
+	noRefFlag   bool    // no georef flag -n|--nogeoref
+	sizeFlag    float64 // set pixel size, -s|--size
+	skipFlag    bool    // skip flag, -s|--skip
+	taxonFlag   string  // set taxon, -t|--taxon
+	uncertFlag  int     // set uncertainty, -u|--uncert
 )

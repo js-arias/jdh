@@ -164,7 +164,7 @@ func txSyncRun(c *cmdapp.Command, args []string) {
 		localDB.Exec(jdh.Commit, "", nil)
 		noFlag = false
 	}
-	if updateFlag {
+	if updateFlag || validFlag {
 		txSyncUpdate(c, tax)
 		localDB.Exec(jdh.Commit, "", nil)
 		noFlag = false
@@ -318,12 +318,6 @@ func txSyncUpdate(c *cmdapp.Command, tax *jdh.Taxon) {
 		fmt.Fprintf(os.Stderr, "unable to retrieve %s:%s\n", tax.Extern, eid)
 		return
 	}
-	if len(ext.Authority) > 0 {
-		args := new(jdh.Values)
-		args.Add(jdh.KeyId, tax.Id)
-		args.Add(jdh.TaxAuthority, ext.Authority)
-		localDB.Exec(jdh.Set, jdh.Taxonomy, args)
-	}
 	if validFlag {
 		if tax.IsValid != ext.IsValid {
 			args := new(jdh.Values)
@@ -341,6 +335,15 @@ func txSyncUpdate(c *cmdapp.Command, tax *jdh.Taxon) {
 				localDB.Exec(jdh.Set, jdh.Taxonomy, args)
 			}
 		}
+	}
+	if !updateFlag {
+		return
+	}
+	if len(ext.Authority) > 0 {
+		args := new(jdh.Values)
+		args.Add(jdh.KeyId, tax.Id)
+		args.Add(jdh.TaxAuthority, ext.Authority)
+		localDB.Exec(jdh.Set, jdh.Taxonomy, args)
 	}
 	if ext.Rank != jdh.Unranked {
 		args := new(jdh.Values)
