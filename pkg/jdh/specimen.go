@@ -22,7 +22,7 @@ type Specimen struct {
 	// basis of the recorded specimen.
 	Basis BasisOfRecord
 
-	// A reference of the specimen.
+	// a reference of the specimen.
 	Reference string
 
 	// Dataset is the id of the dataset that holds the specimen
@@ -90,7 +90,7 @@ func GetBasisOfRecord(s string) BasisOfRecord {
 	return UnknownBasis
 }
 
-// String returns the bais of record string of a given BasisOfRecord id.
+// String returns the basis of record string of a given BasisOfRecord id.
 func (b BasisOfRecord) String() string {
 	i := int(b)
 	if i >= len(basis) {
@@ -130,9 +130,6 @@ const (
 	// Used in list operations to retrieve only records with or without
 	// a georeference. Valid values are "true" and "false"
 	SpeGeoref = "georef"
-
-	// A reference to the specimen.
-	SpeReference = "reference"
 
 	// Taxon id of the taxon associated with a specimen. Used in delete
 	// operation will delete all the specimens associated with a taxon id.

@@ -112,7 +112,7 @@ func spInfoRun(c *cmdapp.Command, args []string) {
 		if len(keyFlag) == 0 {
 			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeTaxon, spe.Taxon)
 			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeBasis, spe.Basis)
-			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeReference, spe.Reference)
+			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.KeyReference, spe.Reference)
 			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeDataset, spe.Dataset)
 			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeCatalog, spe.Catalog)
 			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeDeterminer, spe.Determiner)
@@ -144,8 +144,6 @@ func spInfoRun(c *cmdapp.Command, args []string) {
 			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeTaxon, spe.Taxon)
 		case jdh.SpeBasis:
 			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeBasis, spe.Basis)
-		case jdh.SpeReference:
-			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeReference, spe.Reference)
 		case jdh.SpeDataset:
 			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.SpeDataset, spe.Dataset)
 		case jdh.SpeCatalog:
@@ -194,6 +192,8 @@ func spInfoRun(c *cmdapp.Command, args []string) {
 			}
 		case jdh.KeyComment:
 			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.KeyComment, spe.Comment)
+		case jdh.KeyReference:
+			fmt.Fprintf(os.Stdout, "%s=%s\n", jdh.KeyReference, spe.Reference)
 		}
 		return
 	}
@@ -272,8 +272,6 @@ func spInfoRun(c *cmdapp.Command, args []string) {
 		fmt.Fprintf(os.Stdout, "%s\n", spe.Taxon)
 	case jdh.SpeBasis:
 		fmt.Fprintf(os.Stdout, "%s\n", spe.Basis)
-	case jdh.SpeReference:
-		fmt.Fprintf(os.Stdout, "%s\n", spe.Reference)
 	case jdh.SpeDataset:
 		fmt.Fprintf(os.Stdout, "%s\n", spe.Dataset)
 	case jdh.SpeCatalog:
@@ -322,5 +320,7 @@ func spInfoRun(c *cmdapp.Command, args []string) {
 		}
 	case jdh.KeyComment:
 		fmt.Fprintf(os.Stdout, "%s\n", spe.Comment)
+	case jdh.KeyReference:
+		fmt.Fprintf(os.Stdout, "%s\n", spe.Reference)
 	}
 }

@@ -258,6 +258,7 @@ func (db *DB) searchTaxon(l *listScanner, name string, kvs []jdh.KeyValue) {
 	}
 	if i > 0 {
 		prefix = nm[:i]
+		nm = nm[:i]
 	}
 	pId := ""
 	var rank jdh.Rank

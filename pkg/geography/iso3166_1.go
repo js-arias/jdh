@@ -92,6 +92,7 @@ var codeCountry = map[string]Country{
 	"Switzerland":                           "CH",
 	"Côte d'Ivoire":                         "CI",
 	"Cote d'Ivoire":                         "CI",
+	"Ivory Coast":                         "CI",
 	"Cook Islands":                          "CK",
 	"Cook":                                  "CK",
 	"Chile":                                 "CL",

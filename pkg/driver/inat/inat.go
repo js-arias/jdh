@@ -2,11 +2,11 @@
 // All rights reserved.
 // Distributed under BSD2 license that can be found in the LICENSE file.
 
-// Package gbif implements a jdh driver for gbif.
-package gbif
+// Package inat implements a jdh driver for i-Naturalist.
+package inat
 
 import (
-	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"net/http"
 	"time"
@@ -14,9 +14,9 @@ import (
 	"github.com/js-arias/jdh/pkg/jdh"
 )
 
-const driver = "gbif"
+const driver = "inat"
 
-// DB implements the GBIF connection jdh DB interface.
+// DB implements the i-Naturalist connection jdh DB interface.
 type DB struct {
 	isClosed bool
 	request  chan string
@@ -52,21 +52,17 @@ func (db *DB) Driver() string {
 	return driver
 }
 
-// Executable query can not be done in gbif: it is a read only database.
+// Executable query can not be done in inat: it is a read only database.
 func (db *DB) Exec(query jdh.Query, table jdh.Table, param interface{}) (string, error) {
-	return "", errors.New("gbif is a read only database")
+	return "", errors.New("ncbi is a read only database")
 }
 
-// Get returns an element data from gbif database.
+// Get returns an element data from inat database.
 func (db *DB) Get(table jdh.Table, id string) (jdh.Scanner, error) {
 	if db.isClosed {
 		return nil, errors.New("database already closed")
 	}
 	switch table {
-	case jdh.Datasets:
-		return db.getSet(id)
-	case jdh.Specimens:
-		return db.specimen(id)
 	case jdh.Taxonomy:
 		return db.taxon(id)
 	}
@@ -82,17 +78,13 @@ func (db *DB) List(table jdh.Table, args *jdh.Values) (jdh.ListScanner, error) {
 		return nil, errors.New("empty argument list")
 	}
 	switch table {
-	case jdh.Datasets:
-		return db.listSet(args.KV)
-	case jdh.Specimens:
-		return db.occurrences(args.KV)
 	case jdh.Taxonomy:
 		return db.taxonList(args.KV)
 	}
 	return nil, errors.New("list not implemented for table " + string(table))
 }
 
-const wsHead = "http://api.gbif.org/v0.9/"
+const inatHead = "http://www.inaturalist.org/"
 
 // process requests
 func (db *DB) req() {
@@ -110,34 +102,16 @@ func (db *DB) req() {
 	}
 }
 
-func (db *DB) listRequest(request string, an interface{}) error {
-	db.request <- request
-	a := <-db.answer
-	switch answer := a.(type) {
-	case error:
-		return answer
-	case *http.Response:
-		defer answer.Body.Close()
-		d := json.NewDecoder(answer.Body)
-		if err := d.Decode(an); err != nil {
+func skip(dec *xml.Decoder, end string) error {
+	for tk, err := dec.Token(); ; tk, err = dec.Token() {
+		if err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func (db *DB) simpleRequest(request string, an interface{}) error {
-	db.request <- request
-	a := <-db.answer
-	switch answer := a.(type) {
-	case error:
-		return answer
-	case *http.Response:
-		defer answer.Body.Close()
-		d := json.NewDecoder(answer.Body)
-		if err := d.Decode(an); err != nil {
-			return err
+		switch t := tk.(type) {
+		case xml.EndElement:
+			if t.Name.Local == end {
+				return nil
+			}
 		}
 	}
-	return nil
 }

@@ -246,6 +246,245 @@ Options
           title          Title of the dataset.
           url            Url of the dataset.
 
+Deletes rasterized distributions
+
+Synopsis
+
+    jdh ra.del [-i|--id value] [-p|--port value] [-t|--taxon value]
+	[<name> [<parentname>]]
+
+Description
+
+Ra.del removes a rasterized distribution from the database, or, if option -t
+or --taxon is defined, or taxon name is given, all the rasterized
+distributions associated with the indicated taxon. This option deletes the
+rasters, neither specimens or taxons, use command sp.del or tx.del to perform
+that operations.
+
+Operations
+
+    -i value
+    --id value
+      Search for the indicated raster id.
+
+    -p value
+    --port value
+      Sets the port in which the server will be listening. By default the
+      value is ":16917"
+
+    -t value
+    --taxon value
+      Search for the indicated taxon id.
+
+    <name>
+      Search for the indicated name. If there are more than one taxon,
+      then the list of possible candidates will be printed and the
+      program will be terminated. Ignored if option -t or --taxon are
+      defined.
+
+    <parentname>
+      If defined, the taxon search with <name> will be limited to
+      descendants of the indicated name. Ignored if option -t or --taxon
+      are defined.
+
+Prints information about a rasterized distribution
+
+Synopsis
+
+    jdh ra.info -i|--id value [-k|--key value] [-m|--machine]
+	[-p|--port value]
+
+Description
+
+Ra.info prints general information of a rasterized distribution in the
+database.
+
+Options
+
+    -i value
+    --id value
+      Search for the indicated rasterized distribution id.
+      This option is required.
+
+    -k value
+    --key value
+      If set, only a particular value of the specimen will be printed.
+      Valid keys are:
+          column         Number of columns in the raster.
+          comment        A free text comment on the raster.
+          extern         Extern identifiers of the specimen, in the form
+                         <service>:<key>.
+          pixel          Sets a pixel value in the raster, in the form
+                         "X,Y,Val", in which Val is an int.
+          reference      A bibliographic reference to the raster.
+          source         Source of the raster.
+          taxon          Id of the taxon assigned to the raster.
+
+    -m
+    --machine
+      If set, the output will be machine readable. That is, just key=value pairs
+      will be printed.
+
+    -p value
+    --port value
+      Sets the port in which the server will be listening. By default the
+      value is ":16917"
+
+Prints a list of rasterized distributions
+
+Synopsis
+
+    jdh ra.ls [-c|--children] [-m|--machine] [-p|--port value]
+	[-t|--taxon value] [-v|--verbose] [<name> [<parentname>]]
+
+Description
+
+Ra.ls prints a list of rasterized distributions associated with a taxon.
+
+Options
+
+    -c
+    --children
+      If set, the rastes associated with the indicated taxon, as well
+      as the ones from its descendants, will be printed.
+
+    -m
+    --machine
+      If set, the output will be machine readable. That is, just ids will
+      be printed.
+
+    -p value
+    --port value
+      Sets the port in which the server will be listening. By default the
+      value is ":16917"
+
+    -t value
+    --taxon value
+      Search for the indicated taxon id.
+
+    -v
+    --verbose
+      If defined, then a large list (including ids) will be printed. This
+      option is ignored if -m or --machine option is defined.
+
+    <name>
+      Search for the indicated name. If there are more than one taxon,
+      then the list of possible candidates will be printed and the
+      program will be terminated. Ignored if option -t or --taxon are
+      defined.
+
+    <parentname>
+      If defined, the taxon search with <name> will be limited to
+      descendants of the indicated name. Ignored if option -t or --taxon
+      are defined.
+
+Creates raster distributions from specimen data
+
+Synopsis
+
+    jdh ra.mk [-e|--extdb name] [-p|--port value] [-r|--rank name]
+	[-s|--size value] [-t|--taxon value] [<name> [<parentname>]]
+
+Description
+
+Ra.mk uses specimen data in the database (or an extern database, defined with
+-e, --extdb option) to creates a precense-absence rasterized distributions.
+Only valid taxons will be rasterized (although their sinonyms will be used to
+create the raster).
+
+When the options -t, --taxon or a name are used, the effect of the command
+will only affect the indicated taxon and its descendants.
+
+When the -r, --rank option is used, only the taxons at or below the indicated
+rank will be rasterized.
+
+Options
+
+    -e name
+    --extdb name
+      Sets the a extern database to extract distribution data.
+
+    -p value
+    --port value
+      Sets the port in which the server will be listening. By default the
+      value is ":16917"
+
+    -r name
+    --rank name
+      If set, only taxons below the indicated rank will be populated.
+      Valid values are:
+          kingdom
+          class
+          order
+          family
+          genus
+          species
+
+    -s value
+    --size value
+      Sets the size of a pixel side (pixels, or cells are assumed as squared),
+      in terms of arc degrees. By default, the value is 1. It must be a value
+      between 0 and 360 (not inclusive). The value will be arranged to make
+      the number of colums fit well in the 360 degrees.
+
+    -t value
+    --taxon value
+      Search for the indicated taxon id.
+
+    <name>
+      Search for the indicated name. If there are more than one taxon,
+      then the list of possible candidates will be printed and the
+      program will be terminated. Ignored if option -t or --taxon are
+      defined.
+
+    <parentname>
+      If defined, the taxon search with <name> will be limited to
+      descendants of the indicated name. Ignored if option -t or --taxon
+      are defined.
+
+Sets a value in a rasterized distribution
+
+Synopsis
+
+    jdh ra.set -i|--id value [-p|--port value] [<key=value>...]
+
+Description
+
+Ra.set sets a particular value for a rasterized d in the database. Use this
+command to edit the rasterized distribution database, instead of manual
+edition.
+
+If no key is defined, the key values will be read from the standard input,
+it is assumed that each line is in the form:
+     'key=value'
+Lines starting with '#' or ';' will be ignored.
+
+Options
+
+    -i value
+    --id value
+      Indicate the raster to be set. It is a required option.
+
+    -p value
+    --port value
+      Sets the port in which the server will be listening. By default the
+      value is ":16917"
+
+    <key=value>
+      Indicates the key, following by an equal and the new value, if the
+      new value is empty, it is interpreted as a deletion of the
+      current value. For flexibility it is recommended to use quotations,
+      e.g. "basis=preserved specimen"
+      Valid keys are:
+          comment        A free text comment on the raster.
+          extern         Extern identifiers of the specimen, in the form
+                         <service>:<key>.
+          pixel          Sets a pixel value in the raster, in the form
+                         "X,Y,Val", in which Val is an int.
+          reference      A bibliographic reference to the raster.
+          source         Source of the raster.
+          taxon          Id of the taxon assigned to the raster.
+
 Deletes specimens
 
 Synopsis
@@ -278,11 +517,12 @@ Options
     <name>
       Search for the indicated name. If there are more than one taxon,
       then the list of possible candidates will be printed and the
-      program will be terminated. Ignored if option -i or --id are defined.
+      program will be terminated. Ignored if option -t or --taxon are
+      defined.
 
     <parentname>
       If defined, the taxon search with <name> will be limited to
-      descendants of the indicated name. Ignored if option -i or --id
+      descendants of the indicated name. Ignored if option -t or --taxon
       are defined.
 
 Imports specimen data
@@ -480,11 +720,12 @@ Options
     <name>
       Search for the indicated name. If there are more than one taxon,
       then the list of possible candidates will be printed and the
-      program will be terminated. Ignored if option -i or --id are defined.
+      program will be terminated. Ignored if option -t or --taxon are
+      defined.
 
     <parentname>
       If defined, the taxon search with <name> will be limited to
-      descendants of the indicated name. Ignored if option -i or --id
+      descendants of the indicated name. Ignored if option -t or --taxon
       are defined.
 
 Prints a list of specimens
@@ -506,8 +747,8 @@ Options
 
     -c
     --children
-      If set, all the speciemens associated with the indicated taxon, as well
-      as the indicated taxon, will be printed.
+      If set, the speciemens associated with the indicated taxon, as well
+      as the ones from its descendants, will be printed.
 
     -e name
     --extdb name
@@ -550,11 +791,12 @@ Options
     <name>
       Search for the indicated name. If there are more than one taxon,
       then the list of possible candidates will be printed and the
-      program will be terminated. Ignored if option -i or --id are defined.
+      program will be terminated. Ignored if option -t or --taxon are
+      defined.
 
     <parentname>
       If defined, the taxon search with <name> will be limited to
-      descendants of the indicated name. Ignored if option -i or --id
+      descendants of the indicated name. Ignored if option -t or --taxon
       are defined.
 
 Add specimens from an extern database
@@ -571,11 +813,14 @@ Sp.pop uses an extern database to populate the local database with specimens.
 When the options -t, --taxon or a name are used, the effect of the command
 will only affect the indicated taxon and its descendants.
 
+When the -r, --rank option is used, only the taxons at, or below the indicated
+rank will be populated.
+
 Options
 
     -e name
     --extdb name
-      Set the extern database.
+      Sets the extern database.
       Valid values are:
           gbif    specimens from gbif.
       This parameter is required.
@@ -608,11 +853,12 @@ Options
     <name>
       Search for the indicated name. If there are more than one taxon,
       then the list of possible candidates will be printed and the
-      program will be terminated. Ignored if option -i or --id are defined.
+      program will be terminated. Ignored if option -t or --taxon are
+      defined.
 
     <parentname>
       If defined, the taxon search with <name> will be limited to
-      descendants of the indicated name. Ignored if option -i or --id
+      descendants of the indicated name. Ignored if option -t or --taxon
       are defined.
 
 Sets an specimen value
@@ -635,7 +881,7 @@ Options
 
     -i value
     --id value
-      Indicate the dataset to be set. It is a required option.
+      Indicate the specimen to be set. It is a required option.
 
     -p value
     --port value
@@ -841,6 +1087,7 @@ Options
       Set the extern database. By default, the local database is used.
       Valid values are:
           gbif    taxonomy from gbif.
+          inat    taxonomy from inaturalist.
           ncbi    taxonomy from ncbi (genbank).
 
     -i value
@@ -910,6 +1157,7 @@ Options
       Set the extern database. By default, the local database is used.
       Valid values are:
           gbif    taxonomy from gbif.
+          inat    taxonomy from inaturalist.
           ncbi    taxonomy from ncbi (genbank).
 
     -i value
@@ -1057,6 +1305,7 @@ Options
       Set the extern database.
       Valid values are:
           gbif    taxonomy from gbif.
+          inat    taxonomy from inaturalist.
           ncbi    taxonomy from ncbi (genbank).
       This parameter is required.
 
@@ -1136,6 +1385,7 @@ Options
       Set the extern database. By default, the local database is used.
       Valid values are:
           gbif    taxonomy from gbif.
+          inat    taxonomy from inaturalist.
           ncbi    taxonomy from ncbi (genbank).
 
     -f

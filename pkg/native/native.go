@@ -19,9 +19,10 @@ type DB struct {
 	path string // path of the database
 
 	//database tables
-	d *datasets
-	t *taxonomy
-	s *specimens
+	d  *datasets
+	t  *taxonomy
+	s  *specimens
+	rd *distros
 
 	lock sync.Mutex
 }
@@ -31,7 +32,17 @@ func Open(path string) *DB {
 	db := &DB{path: path}
 	db.d = openDatasets(db)
 	db.t = openTaxonomy(db)
-	db.s = openSpecimens(db)
+	var done sync.WaitGroup
+	done.Add(2)
+	go func() {
+		db.s = openSpecimens(db)
+		done.Done()
+	}()
+	go func() {
+		db.rd = openDistros(db)
+		done.Done()
+	}()
+	done.Wait()
 	return db
 }
 
@@ -46,6 +57,12 @@ func (db *DB) Add(table jdh.Table, dec *json.Decoder) (string, error) {
 			return "", err
 		}
 		return db.d.add(set)
+	case jdh.RasDistros:
+		ras := &jdh.Raster{}
+		if err := dec.Decode(ras); err != nil {
+			return "", err
+		}
+		return db.rd.add(ras)
 	case jdh.Specimens:
 		spe := &jdh.Specimen{}
 		if err := dec.Decode(spe); err != nil {
@@ -86,6 +103,7 @@ func (db *DB) Commit() error {
 		doCommit(db.d, &done, ec)
 		doCommit(db.t, &done, ec)
 		doCommit(db.s, &done, ec)
+		doCommit(db.rd, &done, ec)
 		done.Wait()
 		close(ec)
 	}()
@@ -105,6 +123,8 @@ func (db *DB) Delete(table jdh.Table, vals []jdh.KeyValue) error {
 	switch table {
 	case jdh.Datasets:
 		return db.d.delete(vals)
+	case jdh.RasDistros:
+		return db.rd.delete(vals)
 	case jdh.Specimens:
 		return db.s.delete(vals)
 	case jdh.Taxonomy:
@@ -120,6 +140,8 @@ func (db *DB) Get(table jdh.Table, id string) (interface{}, error) {
 	switch table {
 	case jdh.Datasets:
 		return db.d.get(id)
+	case jdh.RasDistros:
+		return db.rd.get(id)
 	case jdh.Specimens:
 		return db.s.get(id)
 	case jdh.Taxonomy:
@@ -135,6 +157,8 @@ func (db *DB) List(table jdh.Table, vals []jdh.KeyValue) (*list.List, error) {
 	switch table {
 	case jdh.Datasets:
 		return db.d.list(vals)
+	case jdh.RasDistros:
+		return db.rd.list(vals)
 	case jdh.Specimens:
 		return db.s.list(vals)
 	case jdh.Taxonomy:
@@ -150,6 +174,8 @@ func (db *DB) Set(table jdh.Table, vals []jdh.KeyValue) error {
 	switch table {
 	case jdh.Datasets:
 		return db.d.set(vals)
+	case jdh.RasDistros:
+		return db.rd.set(vals)
 	case jdh.Specimens:
 		return db.s.set(vals)
 	case jdh.Taxonomy:

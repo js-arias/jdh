@@ -46,6 +46,7 @@ Options
       Set the extern database.
       Valid values are:
           gbif    taxonomy from gbif.
+          inat    taxonomy from inaturalist.
           ncbi    taxonomy from ncbi (genbank).
       This parameter is required.
     

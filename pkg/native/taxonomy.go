@@ -271,6 +271,10 @@ func (t *taxonomy) delTaxon(tx *taxon) {
 	if t.db.s != nil {
 		t.db.s.delTaxon(tx.data.Id)
 	}
+	// removes rasters
+	if t.db.rd != nil {
+		t.db.rd.delTaxon(tx.data.Id)
+	}
 	tx.childs = nil
 	nmLow := strings.ToLower(tx.data.Name)
 	v := t.names.Lookup(nmLow).([]*taxon)

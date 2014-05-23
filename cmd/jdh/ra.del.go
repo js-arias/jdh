@@ -12,24 +12,25 @@ import (
 	"github.com/js-arias/jdh/pkg/jdh"
 )
 
-var spDel = &cmdapp.Command{
-	Name: "sp.del",
+var raDel = &cmdapp.Command{
+	Name: "ra.del",
 	Synopsis: `[-i|--id value] [-p|--port value] [-t|--taxon value]
 	[<name> [<parentname>]]`,
-	Short: "deletes specimens",
+	Short: "deletes rasterized distributions",
 	Long: `
 Description
 
-Sp.del removes an specimen from the database, or, if option -t or --taxon is
-defined, or a taxon name is given, all the specimens associated with the
-indicated taxon. This option just deletes the specimens, not the taxon, to
-delete a taxon use the command tx.del.
+Ra.del removes a rasterized distribution from the database, or, if option -t
+or --taxon is defined, or taxon name is given, all the rasterized
+distributions associated with the indicated taxon. This option deletes the
+rasters, neither specimens or taxons, use command sp.del or tx.del to perform
+that operations.
 
-Options
+Operations
 
     -i value
     --id value
-      Search for the indicated specimen id.
+      Search for the indicated raster id.
 
     -p value
     --port value
@@ -54,21 +55,21 @@ Options
 }
 
 func init() {
-	spDel.Flag.StringVar(&idFlag, "id", "", "")
-	spDel.Flag.StringVar(&idFlag, "i", "", "")
-	spDel.Flag.StringVar(&portFlag, "port", "", "")
-	spDel.Flag.StringVar(&portFlag, "p", "", "")
-	spDel.Flag.StringVar(&taxonFlag, "taxon", "", "")
-	spDel.Flag.StringVar(&taxonFlag, "t", "", "")
-	spDel.Run = spDelRun
+	raDel.Flag.StringVar(&idFlag, "id", "", "")
+	raDel.Flag.StringVar(&idFlag, "i", "", "")
+	raDel.Flag.StringVar(&portFlag, "port", "", "")
+	raDel.Flag.StringVar(&portFlag, "p", "", "")
+	raDel.Flag.StringVar(&taxonFlag, "taxon", "", "")
+	raDel.Flag.StringVar(&taxonFlag, "t", "", "")
+	raDel.Run = raDelRun
 }
 
-func spDelRun(c *cmdapp.Command, args []string) {
+func raDelRun(c *cmdapp.Command, args []string) {
 	openLocal(c)
 	vals := new(jdh.Values)
 	if len(idFlag) > 0 {
 		vals.Add(jdh.KeyId, idFlag)
-		if _, err := localDB.Exec(jdh.Delete, jdh.Specimens, vals); err != nil {
+		if _, err := localDB.Exec(jdh.Delete, jdh.RasDistros, vals); err != nil {
 			fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr(err))
 			os.Exit(1)
 		}
@@ -95,11 +96,11 @@ func spDelRun(c *cmdapp.Command, args []string) {
 			return
 		}
 	} else {
-		fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr("expectiong specimen id or taxon name or id"))
+		fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr("expectiong raster id or taxon name or id"))
 		c.Usage()
 	}
-	vals.Add(jdh.SpeTaxon, tax.Id)
-	if _, err := localDB.Exec(jdh.Delete, jdh.Specimens, vals); err != nil {
+	vals.Add(jdh.RDisTaxon, tax.Id)
+	if _, err := localDB.Exec(jdh.Delete, jdh.RasDistros, vals); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr(err))
 		os.Exit(1)
 	}

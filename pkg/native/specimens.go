@@ -180,6 +180,9 @@ func (s *specimens) addSpecimen(spe *jdh.Specimen) {
 	sp.taxon = tax
 	sp.elem = tax.specs.PushBack(sp)
 	s.ids[spe.Id] = sp
+	if len(spe.Catalog) > 0 {
+		s.ids[spe.Catalog] = sp
+	}
 	for _, e := range spe.Extern {
 		s.ids[e] = sp
 	}
@@ -523,15 +526,6 @@ func (s *specimens) set(vals []jdh.KeyValue) error {
 				continue
 			}
 			spe.Locality = v
-		case jdh.SpeReference:
-			v := ""
-			if len(kv.Value) > 0 {
-				v = strings.TrimSpace(kv.Value[0])
-			}
-			if spe.Reference == v {
-				continue
-			}
-			spe.Reference = v
 		case jdh.SpeTaxon:
 			v := ""
 			if len(kv.Value) > 0 {
@@ -565,41 +559,6 @@ func (s *specimens) set(vals []jdh.KeyValue) error {
 				s.taxLs.Remove(oldtax.elem)
 				oldtax.elem = nil
 				delete(s.taxId, oldtax.id)
-			}
-		case jdh.KeyComment:
-			v := ""
-			if len(kv.Value) > 0 {
-				v = strings.TrimSpace(kv.Value[0])
-			}
-			if spe.Comment == v {
-				continue
-			}
-			spe.Comment = v
-		case jdh.KeyExtern:
-			ok := false
-			for _, v := range kv.Value {
-				v = strings.TrimSpace(v)
-				if len(v) == 0 {
-					continue
-				}
-				serv, ext, err := jdh.ParseExtern(v)
-				if err != nil {
-					return err
-				}
-				if len(ext) == 0 {
-					if !s.delExtern(sp, serv) {
-						continue
-					}
-					ok = true
-					continue
-				}
-				if s.addExtern(sp, v) != nil {
-					continue
-				}
-				ok = true
-			}
-			if !ok {
-				continue
 			}
 		case jdh.GeoCountry:
 			v := geography.Country("")
@@ -700,6 +659,50 @@ func (s *specimens) set(vals []jdh.KeyValue) error {
 				continue
 			}
 			spe.Georef.Validation = v
+		case jdh.KeyComment:
+			v := ""
+			if len(kv.Value) > 0 {
+				v = strings.TrimSpace(kv.Value[0])
+			}
+			if spe.Comment == v {
+				continue
+			}
+			spe.Comment = v
+		case jdh.KeyExtern:
+			ok := false
+			for _, v := range kv.Value {
+				v = strings.TrimSpace(v)
+				if len(v) == 0 {
+					continue
+				}
+				serv, ext, err := jdh.ParseExtern(v)
+				if err != nil {
+					return err
+				}
+				if len(ext) == 0 {
+					if !s.delExtern(sp, serv) {
+						continue
+					}
+					ok = true
+					continue
+				}
+				if s.addExtern(sp, v) != nil {
+					continue
+				}
+				ok = true
+			}
+			if !ok {
+				continue
+			}
+		case jdh.KeyReference:
+			v := ""
+			if len(kv.Value) > 0 {
+				v = strings.TrimSpace(kv.Value[0])
+			}
+			if spe.Reference == v {
+				continue
+			}
+			spe.Reference = v
 		default:
 			continue
 		}

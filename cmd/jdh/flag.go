@@ -54,3 +54,8 @@ var (
 	taxonFlag   string // set taxon, -t|--taxon
 	uncertFlag  int    // set uncertainty, -u|--uncert
 )
+
+// flags used by raster commands
+var (
+	sizeFlag float64 // set pixel size, -s|--size
+)

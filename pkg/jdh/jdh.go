@@ -213,6 +213,9 @@ const (
 	// e.g. "gbif:5216933". An empty <id> during a set operation will
 	// delete the extern identifier.
 	KeyExtern = "extern"
+
+	// A bibliographic reference.
+	KeyReference = "reference"
 )
 
 // ParseExtern parses an extern identifier. Extern identifiers are of the

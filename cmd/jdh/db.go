@@ -14,6 +14,7 @@ import (
 	"github.com/js-arias/jdh/pkg/jdh"
 
 	_ "github.com/js-arias/jdh/pkg/driver/gbif"
+	_ "github.com/js-arias/jdh/pkg/driver/inat"
 	_ "github.com/js-arias/jdh/pkg/driver/native"
 	_ "github.com/js-arias/jdh/pkg/driver/ncbi"
 )

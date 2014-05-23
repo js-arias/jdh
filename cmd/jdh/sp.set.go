@@ -31,7 +31,7 @@ Options
 
     -i value
     --id value
-      Indicate the dataset to be set. It is a required option.
+      Indicate the specimen to be set. It is a required option.
     
     -p value
     --port value

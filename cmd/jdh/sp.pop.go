@@ -28,11 +28,14 @@ Sp.pop uses an extern database to populate the local database with specimens.
 When the options -t, --taxon or a name are used, the effect of the command
 will only affect the indicated taxon and its descendants.
 
+When the -r, --rank option is used, only the taxons at, or below the indicated
+rank will be populated.
+
 Options
 
     -e name
     --extdb name
-      Set the extern database.
+      Sets the extern database.
       Valid values are:
           gbif    specimens from gbif.
       This parameter is required.
@@ -65,11 +68,12 @@ Options
     <name>
       Search for the indicated name. If there are more than one taxon,
       then the list of possible candidates will be printed and the
-      program will be terminated. Ignored if option -i or --id are defined.
+      program will be terminated. Ignored if option -t or --taxon are
+      defined.
 
     <parentname>
       If defined, the taxon search with <name> will be limited to
-      descendants of the indicated name. Ignored if option -i or --id 
+      descendants of the indicated name. Ignored if option -t or --taxon 
       are defined.      
 	`,
 }

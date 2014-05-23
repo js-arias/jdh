@@ -32,6 +32,7 @@ Options
       Set the extern database. By default, the local database is used.
       Valid values are:
           gbif    taxonomy from gbif.
+          inat    taxonomy from inaturalist.
           ncbi    taxonomy from ncbi (genbank).
     
     -i value

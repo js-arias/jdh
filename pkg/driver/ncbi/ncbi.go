@@ -40,7 +40,7 @@ func open(port string) (jdh.DB, error) {
 	return db, nil
 }
 
-// Close always produce an error (DB interface).
+// Close closes the database.
 func (db *DB) Close() error {
 	if db.isClosed {
 		return errors.New("database already closed")
@@ -54,12 +54,12 @@ func (db *DB) Driver() string {
 	return driver
 }
 
-// Executable query can not be done in gbif: it is a read only database.
+// Executable query can not be done in ncbi: it is a read only database.
 func (db *DB) Exec(query jdh.Query, table jdh.Table, param interface{}) (string, error) {
 	return "", errors.New("ncbi is a read only database")
 }
 
-// Get returns an element data from gbif database.
+// Get returns an element data from ncbi database.
 func (db *DB) Get(table jdh.Table, id string) (jdh.Scanner, error) {
 	if db.isClosed {
 		return nil, errors.New("database already closed")

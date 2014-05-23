@@ -78,11 +78,12 @@ Options
     <name>
       Search for the indicated name. If there are more than one taxon,
       then the list of possible candidates will be printed and the
-      program will be terminated. Ignored if option -i or --id are defined.
+      program will be terminated. Ignored if option -t or --taxon are
+      defined.
 
     <parentname>
       If defined, the taxon search with <name> will be limited to
-      descendants of the indicated name. Ignored if option -i or --id 
+      descendants of the indicated name. Ignored if option -t or --taxon 
       are defined.      
 	`,
 }
