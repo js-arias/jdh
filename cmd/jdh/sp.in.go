@@ -83,7 +83,7 @@ Options
       standard output.
     
     <file>
-      One or more files to be proccessed by tx.in. If no file is given
+      One or more files to be proccessed by sp.in. If no file is given
       then the information is expected to be from the standard input.
 	`,
 }
@@ -353,6 +353,9 @@ func spInNdm(c *cmdapp.Command, fname, parent string, rank jdh.Rank, set *jdh.Da
 							tok, err = skipNdmTaxon(c, in)
 							continue
 						}
+						if verboseFlag {
+							fmt.Fprintf(os.Stdout, "%s %s\n", pId, par.Name)
+						}
 					}
 				}
 			}
@@ -367,6 +370,9 @@ func spInNdm(c *cmdapp.Command, fname, parent string, rank jdh.Rank, set *jdh.Da
 				fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr(err))
 				tok, err = skipNdmTaxon(c, in)
 				continue
+			}
+			if verboseFlag {
+				fmt.Fprintf(os.Stdout, "%s %s\n", id, tax.Name)
 			}
 		} else if skipFlag {
 			tok, err = skipNdmTaxon(c, in)

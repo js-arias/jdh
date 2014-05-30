@@ -55,3 +55,8 @@ var (
 	taxonFlag   string  // set taxon, -t|--taxon
 	uncertFlag  int     // set uncertainty, -u|--uncert
 )
+
+// flags used by tree commands.
+var (
+	nodeFlag string // set node, -n|--node
+)

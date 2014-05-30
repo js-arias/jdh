@@ -42,11 +42,11 @@ Options
 
     -v
     --verbose
-      If set, the name and id of each added taxon will be print in the
+      If set, the name and id of each added dataset will be print in the
       standard output.
     
     <file>
-      One or more files to be proccessed by tx.in. If no file is given
+      One or more files to be proccessed by ds.in. If no file is given
       then the information is expected to be from the standard input.
 	`,
 }
@@ -111,9 +111,13 @@ func dsInTxt(c *cmdapp.Command, fname string) {
 		set := &jdh.Dataset{
 			Title: ln,
 		}
-		if _, err = localDB.Exec(jdh.Add, jdh.Datasets, set); err != nil {
+		id, err := localDB.Exec(jdh.Add, jdh.Datasets, set)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr(err))
 			continue
+		}
+		if verboseFlag {
+			fmt.Fprintf(os.Stdout, "%s %s\n", id, set.Title)
 		}
 	}
 }

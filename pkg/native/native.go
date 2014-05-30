@@ -23,6 +23,7 @@ type DB struct {
 	t  *taxonomy
 	s  *specimens
 	rd *distros
+	tr *trees
 
 	lock sync.Mutex
 }
@@ -33,13 +34,17 @@ func Open(path string) *DB {
 	db.d = openDatasets(db)
 	db.t = openTaxonomy(db)
 	var done sync.WaitGroup
-	done.Add(2)
+	done.Add(3)
 	go func() {
 		db.s = openSpecimens(db)
 		done.Done()
 	}()
 	go func() {
 		db.rd = openDistros(db)
+		done.Done()
+	}()
+	go func() {
+		db.tr = openTrees(db)
 		done.Done()
 	}()
 	done.Wait()
@@ -57,6 +62,12 @@ func (db *DB) Add(table jdh.Table, dec *json.Decoder) (string, error) {
 			return "", err
 		}
 		return db.d.add(set)
+	case jdh.Nodes:
+		nod := &jdh.Node{}
+		if err := dec.Decode(nod); err != nil {
+			return "", err
+		}
+		return db.tr.addNode(nod)
 	case jdh.RasDistros:
 		ras := &jdh.Raster{}
 		if err := dec.Decode(ras); err != nil {
@@ -75,6 +86,12 @@ func (db *DB) Add(table jdh.Table, dec *json.Decoder) (string, error) {
 			return "", err
 		}
 		return db.t.add(tax)
+	case jdh.Trees:
+		phy := &jdh.Phylogeny{}
+		if err := dec.Decode(phy); err != nil {
+			return "", err
+		}
+		return db.tr.addTree(phy)
 	}
 	return "", errors.New("add not implemented for table " + string(table))
 }
@@ -104,6 +121,7 @@ func (db *DB) Commit() error {
 		doCommit(db.t, &done, ec)
 		doCommit(db.s, &done, ec)
 		doCommit(db.rd, &done, ec)
+		doCommit(db.tr, &done, ec)
 		done.Wait()
 		close(ec)
 	}()
@@ -123,12 +141,16 @@ func (db *DB) Delete(table jdh.Table, vals []jdh.KeyValue) error {
 	switch table {
 	case jdh.Datasets:
 		return db.d.delete(vals)
+	case jdh.Nodes:
+		return db.tr.deleteNode(vals)
 	case jdh.RasDistros:
 		return db.rd.delete(vals)
 	case jdh.Specimens:
 		return db.s.delete(vals)
 	case jdh.Taxonomy:
 		return db.t.delete(vals)
+	case jdh.Trees:
+		return db.tr.deleteTree(vals)
 	}
 	return errors.New("delete not implemented for table " + string(table))
 }
@@ -140,12 +162,16 @@ func (db *DB) Get(table jdh.Table, id string) (interface{}, error) {
 	switch table {
 	case jdh.Datasets:
 		return db.d.get(id)
+	case jdh.Nodes:
+		return db.tr.getNode(id)
 	case jdh.RasDistros:
 		return db.rd.get(id)
 	case jdh.Specimens:
 		return db.s.get(id)
 	case jdh.Taxonomy:
 		return db.t.get(id)
+	case jdh.Trees:
+		return db.tr.getTree(id)
 	}
 	return nil, errors.New("get not implemented for table " + string(table))
 }
@@ -157,12 +183,16 @@ func (db *DB) List(table jdh.Table, vals []jdh.KeyValue) (*list.List, error) {
 	switch table {
 	case jdh.Datasets:
 		return db.d.list(vals)
+	case jdh.Nodes:
+		return db.tr.listNode(vals)
 	case jdh.RasDistros:
 		return db.rd.list(vals)
 	case jdh.Specimens:
 		return db.s.list(vals)
 	case jdh.Taxonomy:
 		return db.t.list(vals)
+	case jdh.Trees:
+		return db.tr.listTree(vals)
 	}
 	return nil, errors.New("list not implemented for table " + string(table))
 }
@@ -174,12 +204,16 @@ func (db *DB) Set(table jdh.Table, vals []jdh.KeyValue) error {
 	switch table {
 	case jdh.Datasets:
 		return db.d.set(vals)
+	case jdh.Nodes:
+		return db.tr.setNode(vals)
 	case jdh.RasDistros:
 		return db.rd.set(vals)
 	case jdh.Specimens:
 		return db.s.set(vals)
 	case jdh.Taxonomy:
 		return db.t.set(vals)
+	case jdh.Trees:
+		return db.tr.setTree(vals)
 	}
 	return errors.New("set not implemented for table " + string(table))
 }

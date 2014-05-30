@@ -417,6 +417,9 @@ func (t *taxonomy) list(vals []jdh.KeyValue) (*list.List, error) {
 			noVal = false
 			nameList = true
 		}
+		if !noVal {
+			break
+		}
 	}
 	if noVal {
 		return nil, errors.New("taxon without identification")

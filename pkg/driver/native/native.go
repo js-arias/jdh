@@ -73,6 +73,11 @@ func open(port string) (jdh.DB, error) {
 	if len(port) == 0 {
 		port = Port
 	}
+	if i := strings.Index(port, ":"); i == 0 {
+		port = "localhost" + port
+	} else if i < 0 {
+		port = "localhost:" + port
+	}
 	return &DB{port}, nil
 }
 
