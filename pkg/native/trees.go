@@ -918,6 +918,7 @@ func (tr *trees) setNode(vals []jdh.KeyValue) error {
 				break
 			}
 			np := sis.parent
+			nId := ""
 			if np != nil {
 				p.childs = delNodeFromList(p.childs, nd)
 				np.childs = delNodeFromList(np.childs, sis)
@@ -925,23 +926,23 @@ func (tr *trees) setNode(vals []jdh.KeyValue) error {
 					Tree:   nod.Tree,
 					Parent: np.data.Id,
 				}
-				id, _ := tr.addNode(nu)
-				p = tr.nodes[id]
+				nId, _ = tr.addNode(nu)
+				p = tr.nodes[nId]
 			} else {
 				ph.root = nil
 				nu := &jdh.Node{
 					Tree: nod.Tree,
 				}
-				id, _ := tr.addNode(nu)
-				p = tr.nodes[id]
-				ph.data.Root = id
+				nId, _ = tr.addNode(nu)
+				p = tr.nodes[nId]
+				ph.data.Root = nId
 			}
 			p.childs = append(p.childs, sis)
 			sis.parent = p
-			sis.data.Parent = id
+			sis.data.Parent = nId
 			p.childs = append(p.childs, nd)
 			nd.parent = p
-			nod.Parent = id
+			nod.Parent = nId
 		case jdh.NodTaxon:
 			v := ""
 			if len(kv.Value) > 0 {

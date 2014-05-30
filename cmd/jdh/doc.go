@@ -77,6 +77,28 @@ Options
       Sets the port in which the server will be listening. By default the
       value is ":16917"
 
+Deletes a dataset
+
+Synopsis
+
+    jdh ds.del -i|--id value [-p|--port value]
+
+Description
+
+Ds.del removes a dataset, but not the specimens associated with it, from the
+database.
+
+Options
+
+    -i value
+    --id value
+      Search for the indicated dataset id. It is a required option.
+
+    -p value
+    --port value
+      Sets the port in which the server will be listening. By default the
+      value is ":16917"
+
 Imports dataset data
 
 Synopsis
@@ -106,11 +128,11 @@ Options
 
     -v
     --verbose
-      If set, the name and id of each added taxon will be print in the
+      If set, the name and id of each added dataset will be print in the
       standard output.
 
     <file>
-      One or more files to be proccessed by tx.in. If no file is given
+      One or more files to be proccessed by ds.in. If no file is given
       then the information is expected to be from the standard input.
 
 Prints dataset information
@@ -597,7 +619,7 @@ Options
       standard output.
 
     <file>
-      One or more files to be proccessed by tx.in. If no file is given
+      One or more files to be proccessed by sp.in. If no file is given
       then the information is expected to be from the standard input.
 
 Prints general specimen information
@@ -924,6 +946,233 @@ Options
           uncertainty    Uncertainty, in meters, of the georeference
                          assignation.
           validation     Source of the georeference validation.
+
+Deletes a tree or a node
+
+Synopsis
+
+    jdh tr.del [-c|--collapse] [-i|--id value] [-n|--node value]
+	[-p|--port value]
+
+Description
+
+Tr.del removes a tree (with the -i, --id option) or a node (with -n, --node
+option) from the database. When deleting a node, it will delete it, and all
+of its descendants, optionally, if the option -c, --collapse is defined, then
+the node will be deleted, but their descendats will be assigned to its parent.
+
+Options
+
+    -c
+    --collapse
+      Collapse the node: all the descendants will be assigned to the ancestor
+      of the node. If the node to be collapsed is the root node, then, the
+      collapse will be ignored.
+
+    -i value
+    --id value
+      Search for the indicated tree id.
+
+    -n value
+    --node value
+      Search for the indicated node id.
+
+    -p value
+    --port value
+      Sets the port in which the server will be listening. By default the
+      value is ":16917"
+
+Imports tree data
+
+Synopsis
+
+    jdh tr.in [-a|--anc value] [-f|--format value] [-p|--port value]
+	[-r|--rank value] [-v|--verbose] [<file>...]
+
+Description
+
+Tr.in reads tree data from the indicated files, or standard input (if no file
+is defined), and adds them to the jdh database.
+
+Default input format are tnt tree files (i.e. tread command), assuming that
+the trees are saved with the names and underlines will be replaced with spaces.
+
+Options
+
+    -a value
+    --anc value
+      Sets the parent of the terminals of the tree. The value must be a valid
+      id.
+
+    -f value
+    --format value
+      Sets the format used in the source data. Valid values are:
+          tnt        Tnt tree format (tread)
+
+    -p value
+    --port value
+      Sets the port in which the server will be listening. By default the
+      value is ":16917"
+
+    -r name
+    --rank name
+      Set the rank of the added taxon. If the taxon has a parent (the -a,
+      --anc options) the parent must be concordant with the given rank.
+      Valid values are:
+      	  unranked
+          kingdom
+          class
+          order
+          family
+          genus
+          species
+
+    -v
+    --verbose
+      If set, the id of each added tree will be print in the standard output.
+
+    <file>
+      One or more files to be proccessed by tr.in. If no file is given
+      then the information is expected to be from the standard input.
+
+Prints tree or node information
+
+Synopsis
+
+    jdh tr.info [-i|--id value] [-n|--node value] [-k|--key value]
+	[-m|--machine] [-p|--port value]
+
+Description
+
+Tr.info prints general information of a phylogenetic tree (using the -i, --id
+optin) or a node (using the -n, --node option) in a tree present in the
+database.
+
+Options
+
+    -i value
+    --id value
+      Search for the indicated tree id.
+
+    -n value
+    --node value
+      Search for the indicated node id.
+
+    -k value
+    --key value
+      If set, only a particular value of the taxon will be printed.
+      Valid keys when a a tree is searched (-i, --id option) are:
+          comment        A free text comment on the tree.
+          extern         Extern identifiers of the tree, in the form
+                         <service>:<key>.
+          name           Name of the tree.
+
+      Valid keys when a a node is searched (-n, --node option) are:
+          age            Age of the node.
+          comment        A free text comment on the node.
+          lenght         The length of the branch leading to the node.
+          taxon          The taxon asociated with the node.
+
+    -m
+    --machine
+      If set, the output will be machine readable. That is, just key=value pairs
+      will be printed.
+
+    -p value
+    --port value
+      Sets the port in which the server will be listening. By default the
+      value is ":16917"
+
+Prints a list of trees or nodes
+
+Synopsis
+
+    jdh tr.ls [-a|--ancs] [-n|--node value] [-m|--machine]
+	[-p|--port value] [-v|--verbose]
+
+Description
+
+Tr.ls prints the list of trees, or the nodes of a tree, in the database. With
+no option, tr.ls will print the list of trees, with the -i, --id option it
+will print the descendants, or with the -a, --anc option the ancestors, of a
+particular node.
+
+Options
+
+    -a
+    --ancs
+      If set, and the option -i, --id is set, the parents of the indicated
+      node will be printed.
+
+    -m
+    --machine
+      If set, the output will be machine readable. That is, just ids will
+      be printed.
+
+    -n value
+    --node value
+      Search for the indicated node id.
+
+    -p value
+    --port value
+      Sets the port in which the server will be listening. By default the
+      value is ":16917"
+
+    -v
+    --verbose
+      If defined, then a large list will be printed. This option is ignored
+      if -m or --machine option is defined.
+
+Set a tree or node value
+
+Synopsis
+
+    jdh tr.set [-i|--id value] [-n|--node value] [-p|--port value]
+	[<key=value>...]
+
+Description
+
+Tr.set sets a particular value for a tree (with the -i, --id option) or a node
+(with the -n, --node option) in the database. Use this command to edit the tree
+database, instead of manual edition.
+
+If no key is defined, the key values will be read from the standard input,
+it is assumed that each line is in the form:
+     'key=value'
+Lines starting with '#' or ';' will be ignored.
+
+Options
+
+    -i value
+    --id value
+      Search for the indicated tree id.
+
+    -n value
+    --node value
+      Search for the indicated node id.
+
+    -p value
+    --port value
+      Sets the port in which the server will be listening. By default the
+      value is ":16917"
+
+    <key=value>
+      Indicates the key, following by an equal and the new value, if the
+      new value is empty, it is interpreted as a deletion of the
+      current value. For flexibility it is recommended to use quotations,
+      e.g. "name=Strict consensus tree".
+      Valid keys when a a tree is searched (-i, --id option) are:
+          comment        A free text comment on the tree.
+          extern         Extern identifiers of the tree, in the form
+                         <service>:<key>.
+          name           Name of the tree.
+
+      Valid keys when a a node is searched (-n, --node option) are:
+          age            Age of the node.
+          comment        A free text comment on the node.
+          lenght         The length of the branch leading to the node.
+          sister         move a node to be a sister of the indicated node.
+          taxon          The taxon asociated with the node.
 
 Deletes a taxon
 
