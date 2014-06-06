@@ -590,7 +590,7 @@ func (t *taxonomy) set(vals []jdh.KeyValue) error {
 				continue
 			}
 			// remove the old name
-			nmLow := strings.ToLower(nm)
+			nmLow := strings.ToLower(tax.Name)
 			v := t.names.Lookup(nmLow).([]*taxon)
 			v = delTaxFromList(v, tx)
 			if len(v) > 0 {
@@ -637,7 +637,11 @@ func (t *taxonomy) set(vals []jdh.KeyValue) error {
 			tx.parent.childs = delTaxFromList(tx.parent.childs, tx)
 			p.childs = append(p.childs, tx)
 			tx.parent = p
-			tax.Parent = p.data.Id
+			if p == t.root {
+				tax.Parent = ""
+			} else {
+				tax.Parent = p.data.Id
+			}
 		case jdh.TaxRank:
 			v := jdh.Unranked
 			if len(kv.Value) > 0 {
@@ -651,7 +655,7 @@ func (t *taxonomy) set(vals []jdh.KeyValue) error {
 			}
 			tax.Rank = v
 		case jdh.TaxSynonym:
-			p := t.root
+			p := tx.parent
 			if len(kv.Value) > 0 {
 				v := strings.TrimSpace(kv.Value[0])
 				if len(v) == 0 {
@@ -691,6 +695,7 @@ func (t *taxonomy) set(vals []jdh.KeyValue) error {
 			}
 			tx.parent.childs = delTaxFromList(tx.parent.childs, tx)
 			tx.parent = tx.parent.parent
+			tx.data.Parent = tx.parent.data.Id
 			tx.parent.childs = append(tx.parent.childs, tx)
 			tax.IsValid = true
 		default:

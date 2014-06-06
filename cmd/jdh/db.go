@@ -68,18 +68,15 @@ func valsFromArgs(id string, args []string) *jdh.Values {
 			if err != nil {
 				break
 			}
-			if len(tn) == 1 {
-				continue
-			}
 			ln := strings.Join(tn, " ")
-			if strings.Index(ln, "=") < 0 {
+			if strings.Index(ln, "=") < 1 {
 				continue
 			}
 			vals.Add(parseKeyValArg(ln))
 		}
 	} else {
 		for _, a := range args {
-			if strings.Index(a, "=") < 0 {
+			if strings.Index(a, "=") < 1 {
 				continue
 			}
 			vals.Add(parseKeyValArg(a))

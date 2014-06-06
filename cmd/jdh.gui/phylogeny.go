@@ -80,6 +80,11 @@ func setNode(nod *jdh.Node, anc *trNode, data *trData) *trNode {
 	if len(nod.Taxon) > 0 {
 		tax := taxon(cmd, localDB, nod.Taxon)
 		trn.name.Text = tax.Name
+		if !tax.IsValid {
+			val := taxon(cmd, localDB, tax.Parent)
+			nm := fmt.Sprintf("[%s syn. of %s]", tax.Name, val.Name)
+			trn.name.Text = nm
+		}
 	}
 	vals := new(jdh.Values)
 	vals.Add(jdh.NodChildren, nod.Id)

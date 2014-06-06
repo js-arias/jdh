@@ -219,7 +219,7 @@ func spGrefProc(c *cmdapp.Command, tax *jdh.Taxon, gzt geography.Gazetter) {
 			continue
 		}
 		if len(pts) == 0 {
-			fmt.Fprintf(os.Stdout, "%s: location not found\n", spe.Id, err)
+			fmt.Fprintf(os.Stdout, "%s: location not found\n", spe.Id)
 			continue
 		}
 		lon, lat := spe.Georef.Point.Lon, spe.Georef.Point.Lat
@@ -249,7 +249,7 @@ func spGrefProc(c *cmdapp.Command, tax *jdh.Taxon, gzt geography.Gazetter) {
 			continue
 		}
 		if !corrFlag {
-			fmt.Fprintf(os.Stdout, "%s: location not found\n", spe.Id, err)
+			fmt.Fprintf(os.Stdout, "%s: location not found\n", spe.Id)
 			if verboseFlag {
 				fmt.Fprintf(os.Stderr, "\t%.5f %.5f\t\t[current georeference]\n", lon, lat)
 				for _, p := range pts {

@@ -8,6 +8,8 @@ import (
 	"runtime"
 
 	"github.com/js-arias/cmdapp"
+	"github.com/js-arias/sparta"
+	_ "github.com/js-arias/sparta/init"
 )
 
 var app = &cmdapp.App{
@@ -36,10 +38,14 @@ Please report any bug to J.S. Arias at <jsalarias@csnat.unt.edu.ar>.
 	`,
 	Commands: []*cmdapp.Command{
 		trView,
+		txEd,
+		txNav,
 	},
 }
 
 var cmd *cmdapp.Command
+
+var wnd = make(map[string]sparta.Widget)
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())

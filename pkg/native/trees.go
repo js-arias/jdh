@@ -579,7 +579,28 @@ func (tr *trees) getNode(id string) (*jdh.Node, error) {
 // ListTree returns a list of trees.
 func (tr *trees) listTree(vals []jdh.KeyValue) (*list.List, error) {
 	l := list.New()
-	// creates the list
+	// creates a list of taxons in a tree
+	for _, kv := range vals {
+		if kv.Key != jdh.TreTaxon {
+			continue
+		}
+		if len(kv.Value) == 0 {
+			return l, nil
+		}
+		v := strings.TrimSpace(kv.Value[0])
+		if len(v) == 0 {
+			return l, nil
+		}
+		ph, ok := tr.ids[v]
+		if !ok {
+			return l, nil
+		}
+		for tx, _ := range ph.taxa {
+			l.PushBack(jdh.IdElement{Id: tx})
+		}
+		return l, nil
+	}
+	// creates the list of trees
 	for e := tr.ls.Front(); e != nil; e = e.Next() {
 		ph := e.Value.(*phylogeny)
 		l.PushBack(ph.data)
@@ -645,7 +666,7 @@ func (tr *trees) listNode(vals []jdh.KeyValue) (*list.List, error) {
 				break
 			}
 			addNodeToList(l, ph.root)
-		case jdh.NodTaxon, jdh.TreTaxon:
+		case jdh.NodTaxon:
 			if len(kv.Value) == 0 {
 				break
 			}

@@ -59,4 +59,5 @@ var (
 // flags used by tree commands.
 var (
 	nodeFlag string // set node, -n|--node
+	repFlag  bool   // report flag, -r|--report
 )

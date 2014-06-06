@@ -138,6 +138,6 @@ func txForceProc(c *cmdapp.Command, tax *jdh.Taxon, prevRank, rank jdh.Rank) {
 	}
 	args := new(jdh.Values)
 	args.Add(jdh.KeyId, tax.Id)
-	args.Add(jdh.TaxSynonym, "")
+	args.Add(jdh.TaxSynonym, tax.Parent)
 	localDB.Exec(jdh.Set, jdh.Taxonomy, args)
 }

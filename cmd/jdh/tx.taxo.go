@@ -220,7 +220,7 @@ func txTaxoPrint(c *cmdapp.Command, db jdh.DB, tax *jdh.Taxon, prevRank jdh.Rank
 			fmt.Fprintf(os.Stdout, "\t\t<font color=\"gray\"><i>%s</i> %s [%s]</font>\n", html.EscapeString(s.Name), html.EscapeString(s.Authority), html.EscapeString(serv+s.Id))
 		}
 	case "txt":
-		fmt.Fprintf(os.Stdout, "%s %s [%s]\n", tax.Name, tax.Authority, serv+tax.Id)
+		fmt.Fprintf(os.Stdout, "\t%s %s [%s]\n", tax.Name, tax.Authority, serv+tax.Id)
 		for {
 			s := &jdh.Taxon{}
 			if err := l.Scan(s); err != nil {
@@ -230,7 +230,7 @@ func txTaxoPrint(c *cmdapp.Command, db jdh.DB, tax *jdh.Taxon, prevRank jdh.Rank
 				fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr(err))
 				os.Exit(1)
 			}
-			fmt.Fprintf(os.Stdout, "%s %s [%s]\n", s.Name, s.Authority, serv+s.Id)
+			fmt.Fprintf(os.Stdout, "\t\t%s %s [%s]\n", s.Name, s.Authority, serv+s.Id)
 		}
 	}
 }

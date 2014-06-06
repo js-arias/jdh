@@ -14,7 +14,6 @@ import (
 	"github.com/js-arias/cmdapp"
 	"github.com/js-arias/jdh/pkg/jdh"
 	"github.com/js-arias/sparta"
-	_ "github.com/js-arias/sparta/init"
 	"github.com/js-arias/sparta/widget"
 )
 
@@ -54,63 +53,36 @@ func init() {
 func trViewRun(c *cmdapp.Command, args []string) {
 	cmd = c
 	openLocal(c)
-	l, err := localDB.List(jdh.Trees, new(jdh.Values))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr(err))
-		os.Exit(1)
-	}
-	data := &trList{}
-	for {
-		phy := &jdh.Phylogeny{}
-		if err := l.Scan(phy); err != nil {
-			if err == io.EOF {
-				break
-			}
-			fmt.Fprintf(os.Stderr, "%s\n", c.ErrStr(err))
-			os.Exit(1)
-		}
-		if (len(phy.Id) == 0) || (len(phy.Root) == 0) {
-			continue
-		}
-		data.phyLs = append(data.phyLs, phy)
-	}
-	if len(data.phyLs) == 0 {
-		return
-	}
-	title := fmt.Sprintf("%s: %s [id: %s]", c.Name, data.phyLs[0].Name, data.phyLs[0].Id)
+	title := fmt.Sprintf("%s: please wait", c.Name)
 	m := widget.NewMainWindow("main", title)
 	geo := m.Property(sparta.Geometry).(image.Rectangle)
-	m.SetProperty(sparta.Data, data)
 
 	tv := widget.NewCanvas(m, "tree", image.Rect(0, 0, geo.Dx(), geo.Dy()))
-	curTree := setTree(data.phyLs[0], geo)
-	curTree.putOnScreen()
-	tv.SetProperty(sparta.Data, curTree)
+	wnd["tree"] = tv
 	tv.Capture(sparta.Expose, trViewExpose)
 	tv.Capture(sparta.KeyEv, trViewKey)
 	tv.Capture(sparta.Mouse, trViewMouse)
-	tv.Focus()
 	tv.Update()
 
 	m.Capture(sparta.Configure, trViewConf)
+	go trViewInitList(m, tv)
 
 	sparta.Run()
 }
 
 func trViewConf(m sparta.Widget, e interface{}) bool {
-	ch := m.Property(sparta.Childs).([]sparta.Widget)
 	ev := e.(sparta.ConfigureEvent)
-	for _, c := range ch {
-		if c.Property(sparta.Name).(string) == "tree" {
-			c.SetProperty(sparta.Geometry, image.Rect(0, 0, ev.Rect.Dx(), ev.Rect.Dy()))
-			break
-		}
-	}
+	tv := wnd["tree"]
+	tv.SetProperty(sparta.Geometry, image.Rect(0, 0, ev.Rect.Dx(), ev.Rect.Dy()))
 	return false
 }
 
 func trViewExpose(tv sparta.Widget, e interface{}) bool {
-	data := tv.Property(sparta.Data).(*trData)
+	dt := tv.Property(sparta.Data)
+	if dt == nil {
+		return false
+	}
+	data := dt.(*trData)
 	draw := tv.(*widget.Canvas)
 	for _, n := range data.node {
 		draw.Draw(n.ancLine)
@@ -134,8 +106,12 @@ func trViewExpose(tv sparta.Widget, e interface{}) bool {
 }
 
 func trViewKey(tv sparta.Widget, e interface{}) bool {
+	dt := tv.Property(sparta.Data)
+	if dt == nil {
+		return true
+	}
+	data := dt.(*trData)
 	rect := tv.Property(sparta.Geometry).(image.Rectangle)
-	data := tv.Property(sparta.Data).(*trData)
 	ev := e.(sparta.KeyEvent)
 	switch ev.Key {
 	case sparta.KeyDown:
@@ -153,17 +129,16 @@ func trViewKey(tv sparta.Widget, e interface{}) bool {
 	case sparta.KeyPageDown:
 		data.pos.Y -= rect.Dy() - sparta.HeightUnit
 	case ' ', sparta.KeyReturn:
-		rect := tv.Property(sparta.Geometry).(image.Rectangle)
 		p := tv.Property(sparta.Parent).(sparta.Widget)
 		d := p.Property(sparta.Data).(*trList)
 		if (d.pos + 1) >= len(d.phyLs) {
 			return false
 		}
 		d.pos++
-		title := fmt.Sprintf("%s: %s [id: %s]", cmd.Name, d.phyLs[d.pos].Name, d.phyLs[d.pos].Id)
+		title := fmt.Sprintf("%s: please wait", cmd.Name)
 		p.SetProperty(sparta.Caption, title)
-		data = setTree(d.phyLs[d.pos], rect)
-		tv.SetProperty(sparta.Data, data)
+		tv.SetProperty(sparta.Data, nil)
+		go trViewInitTree(p, tv)
 	case sparta.KeyBackSpace:
 		p := tv.Property(sparta.Parent).(sparta.Widget)
 		d := p.Property(sparta.Data).(*trList)
@@ -171,10 +146,10 @@ func trViewKey(tv sparta.Widget, e interface{}) bool {
 			return false
 		}
 		d.pos--
-		title := fmt.Sprintf("%s: %s [id: %s]", cmd.Name, d.phyLs[d.pos].Name, d.phyLs[d.pos].Id)
+		tv.SetProperty(sparta.Data, nil)
+		title := fmt.Sprintf("%s: please wait", cmd.Name)
 		p.SetProperty(sparta.Caption, title)
-		data = setTree(d.phyLs[d.pos], rect)
-		tv.SetProperty(sparta.Data, data)
+		go trViewInitTree(p, tv)
 	case '+':
 		data.y = data.y * 5 / 4
 	case '-':
@@ -209,7 +184,11 @@ func trViewKey(tv sparta.Widget, e interface{}) bool {
 }
 
 func trViewMouse(tv sparta.Widget, e interface{}) bool {
-	data := tv.Property(sparta.Data).(*trData)
+	dt := tv.Property(sparta.Data)
+	if dt == nil {
+		return true
+	}
+	data := dt.(*trData)
 	ev := e.(sparta.MouseEvent)
 	switch ev.Button {
 	case sparta.MouseRight:
@@ -278,4 +257,46 @@ func trViewNearestNode(pt image.Point, node []*trNode) *trNode {
 		}
 	}
 	return trn
+}
+
+func trViewInitList(m, tv sparta.Widget) {
+	l, err := localDB.List(jdh.Trees, new(jdh.Values))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", cmd.ErrStr(err))
+		return
+	}
+	data := &trList{}
+	for {
+		phy := &jdh.Phylogeny{}
+		if err := l.Scan(phy); err != nil {
+			if err == io.EOF {
+				break
+			}
+			fmt.Fprintf(os.Stderr, "%s\n", cmd.ErrStr(err))
+			return
+		}
+		if (len(phy.Id) == 0) || (len(phy.Root) == 0) {
+			continue
+		}
+		data.phyLs = append(data.phyLs, phy)
+	}
+	if len(data.phyLs) == 0 {
+		return
+	}
+	m.SetProperty(sparta.Data, data)
+	trViewInitTree(m, tv)
+}
+
+func trViewInitTree(m, tv sparta.Widget) {
+	d := m.Property(sparta.Data).(*trList)
+	if d.pos >= len(d.phyLs) {
+		return
+	}
+	title := fmt.Sprintf("%s: %s [id: %s]", cmd.Name, d.phyLs[d.pos].Name, d.phyLs[d.pos].Id)
+	m.SetProperty(sparta.Caption, title)
+	rect := tv.Property(sparta.Geometry).(image.Rectangle)
+	curTree := setTree(d.phyLs[d.pos], rect)
+	curTree.putOnScreen()
+	tv.SetProperty(sparta.Data, curTree)
+	tv.Update()
 }

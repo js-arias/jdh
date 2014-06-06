@@ -99,6 +99,6 @@ func trSetNode(c *cmdapp.Command, args []string) {
 		return
 	}
 	vals := valsFromArgs(nod.Id, args)
-	localDB.Exec(jdh.Set, jdh.Trees, vals)
+	localDB.Exec(jdh.Set, jdh.Nodes, vals)
 	localDB.Exec(jdh.Commit, "", nil)
 }

@@ -234,3 +234,8 @@ func ParseExtern(extern string) (string, string, error) {
 
 // ISO 8601 layout for time, as in <http://en.wikipedia.org/wiki/ISO_8601>
 const Iso8601 = "2006-01-02T15:04:05+07:00"
+
+// IdElement is an Id returned by a jdh database (for example, in a list).
+type IdElement struct {
+	Id string
+}
