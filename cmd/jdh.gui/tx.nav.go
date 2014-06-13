@@ -7,6 +7,7 @@ package main
 import (
 	"fmt"
 	"image"
+	"strings"
 
 	"github.com/js-arias/cmdapp"
 	"github.com/js-arias/jdh/pkg/jdh"
@@ -63,7 +64,10 @@ func txNavRun(c *cmdapp.Command, args []string) {
 	m := widget.NewMainWindow("main", title)
 	geo := m.Property(sparta.Geometry).(image.Rectangle)
 	widget.NewButton(m, "upTax", "up", image.Rect(5, 5, 5+(sparta.WidthUnit*10), 5+(3*sparta.HeightUnit/2)))
-
+	tx := widget.NewCanvas(m, "info", image.Rect(210, 10+(3*sparta.HeightUnit/2), geo.Dx()-10, geo.Dy()-10))
+	tx.SetProperty(sparta.Border, true)
+	tx.Capture(sparta.Expose, txNavInfoExpose)
+	wnd["info"] = tx
 	l := widget.NewList(m, "taxonList", image.Rect(5, 10+(3*sparta.HeightUnit/2), 200, geo.Dy()-10))
 	wnd["taxonList"] = l
 
@@ -79,6 +83,8 @@ func txNavConf(m sparta.Widget, e interface{}) bool {
 	ev := e.(sparta.ConfigureEvent)
 	l := wnd["taxonList"]
 	l.SetProperty(sparta.Geometry, image.Rect(5, 10+(3*sparta.HeightUnit/2), 200, ev.Rect.Dy()-10))
+	tx := wnd["info"]
+	tx.SetProperty(sparta.Geometry, image.Rect(210, 10+(3*sparta.HeightUnit/2), ev.Rect.Dx()-10, ev.Rect.Dy()-10))
 	return false
 }
 
@@ -99,6 +105,9 @@ func txNavComm(m sparta.Widget, e interface{}) bool {
 			title := fmt.Sprintf("%s: please wait", cmd.Name)
 			m.SetProperty(sparta.Caption, title)
 			ev.Source.SetProperty(widget.ListList, nil)
+			tx := wnd["info"]
+			tx.SetProperty(sparta.Data, nil)
+			tx.Update()
 			sparta.Block(nil)
 			go txNavInitList(m, ev.Source, data.db, data, i)
 			break
@@ -108,7 +117,15 @@ func txNavComm(m sparta.Widget, e interface{}) bool {
 		} else {
 			data.sels = []int{ev.Value}
 		}
+		tx := wnd["info"]
+		tx.SetProperty(sparta.Data, nil)
+		tx.Update()
 		ev.Source.Update()
+		sparta.Block(nil)
+		go func() {
+			txNavInfo(tx, data)
+			sparta.Unblock(nil)
+		}()
 	case "upTax":
 		if data.tax.Id == "0" {
 			break
@@ -117,10 +134,72 @@ func txNavComm(m sparta.Widget, e interface{}) bool {
 		m.SetProperty(sparta.Caption, title)
 		l := wnd["taxonList"]
 		l.SetProperty(widget.ListList, nil)
+		tx := wnd["info"]
+		tx.SetProperty(sparta.Data, nil)
 		sparta.Block(nil)
 		go txNavAncList(m, l, data.db, data.tax)
 	}
 	return true
+}
+
+func txNavInfoExpose(tx sparta.Widget, e interface{}) bool {
+	d := tx.Property(sparta.Data)
+	if d == nil {
+		return false
+	}
+	data := d.(*txTaxAnc)
+	c := tx.(*widget.Canvas)
+	txt := widget.Text{}
+	txt.Pos.X = 2
+	txt.Pos.Y = 2
+	txt.Text = "Id: " + data.tax.Id
+	c.Draw(txt)
+	txt.Pos.Y += sparta.HeightUnit
+	txt.Text = data.tax.Name
+	c.Draw(txt)
+	txt.Pos.Y += sparta.HeightUnit
+	txt.Text = data.tax.Authority
+	c.Draw(txt)
+	txt.Pos.Y += sparta.HeightUnit
+	txt.Text = data.tax.Rank.String()
+	c.Draw(txt)
+	txt.Pos.Y += sparta.HeightUnit
+	if data.tax.IsValid {
+		txt.Text = "Valid"
+		c.Draw(txt)
+		if data.anc != nil {
+			txt.Pos.Y += sparta.HeightUnit
+			txt.Text = "Parent: " + data.anc.Name
+			c.Draw(txt)
+
+		}
+	} else {
+		txt.Text = "Synonym of " + data.anc.Name
+		c.Draw(txt)
+
+	}
+	if len(data.tax.Extern) > 0 {
+		txt.Pos.Y += sparta.HeightUnit
+		txt.Text = "Extern ids:"
+		c.Draw(txt)
+		for _, e := range data.tax.Extern {
+			txt.Pos.Y += sparta.HeightUnit
+			txt.Text = "    " + e
+			c.Draw(txt)
+		}
+	}
+	if len(data.tax.Comment) > 0 {
+		txt.Pos.Y += sparta.HeightUnit
+		txt.Text = "Comments:"
+		c.Draw(txt)
+		cmt := strings.Split(data.tax.Comment, "\n")
+		for _, e := range cmt {
+			txt.Pos.Y += sparta.HeightUnit
+			txt.Text = "  " + e
+			c.Draw(txt)
+		}
+	}
+	return false
 }
 
 func txNavInitList(m, l sparta.Widget, db jdh.DB, data *txList, i int) {
@@ -138,8 +217,9 @@ func txNavInitList(m, l sparta.Widget, db jdh.DB, data *txList, i int) {
 	m.SetProperty(sparta.Caption, title)
 	m.SetProperty(sparta.Data, data)
 	l.SetProperty(widget.ListList, data)
+	tx := wnd["info"]
+	txNavInfo(tx, data)
 	sparta.Unblock(nil)
-
 }
 
 func txNavAncList(m, l sparta.Widget, db jdh.DB, tax *jdh.Taxon) {
@@ -161,5 +241,23 @@ func txNavAncList(m, l sparta.Widget, db jdh.DB, tax *jdh.Taxon) {
 		}
 	}
 	l.SetProperty(widget.ListList, data)
+	tx := wnd["info"]
+	txNavInfo(tx, data)
 	sparta.Unblock(nil)
+}
+
+func txNavInfo(tx sparta.Widget, data *txList) {
+	if len(data.sels) == 0 {
+		tx.SetProperty(sparta.Data, nil)
+	} else {
+		pair := &txTaxAnc{
+			tax: data.desc[data.sels[0]],
+			anc: data.tax,
+		}
+		if data.tax.Id == "0" {
+			pair.anc = nil
+		}
+		tx.SetProperty(sparta.Data, pair)
+	}
+	tx.Update()
 }

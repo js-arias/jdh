@@ -31,6 +31,26 @@ func taxon(c *cmdapp.Command, db jdh.DB, id string) *jdh.Taxon {
 	return tax
 }
 
+func taxonRank(c *cmdapp.Command, db jdh.DB, tax *jdh.Taxon) jdh.Rank {
+	if tax == nil {
+		return jdh.Kingdom
+	}
+	for {
+		if tax.Rank != jdh.Unranked {
+			return tax.Rank
+		}
+		if len(tax.Parent) == 0 {
+			return jdh.Kingdom
+		}
+		tax = taxon(c, db, tax.Parent)
+	}
+}
+
+type txTaxAnc struct {
+	tax *jdh.Taxon
+	anc *jdh.Taxon
+}
+
 type txList struct {
 	db   jdh.DB
 	tax  *jdh.Taxon

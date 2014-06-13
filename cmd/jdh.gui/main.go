@@ -37,6 +37,7 @@ Reporting bugs
 Please report any bug to J.S. Arias at <jsalarias@csnat.unt.edu.ar>.
 	`,
 	Commands: []*cmdapp.Command{
+		spNav,
 		trView,
 		txEd,
 		txNav,
